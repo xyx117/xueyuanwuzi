@@ -1,0 +1,335 @@
+﻿
+@{
+    ViewBag.Title = "LiuchengIndex";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="p" class="easyui-panel" data-options="fit:true, border:false " style="padding:5px;">
+    <table id="liucheng" class="easyui-datagrid" title="位置：基本设置>>流程设置" style="height:auto;width:100%">
+        <thead>
+            <tr>
+                <th data-options="field:'id',align:'center',width:'10%'" hidden>ID</th>
+
+                <th data-options="field:'mingcheng',align:'center',width:'30%',formatter:Formatter_liucheng">流程名称&nbsp;<i style="color:red">(点击链接设置子流程)</i></th>
+
+                <th data-options="field:'suoshubumen',align:'center',width:'15%'">所属部门</th>
+
+                <th data-options="field:'beizhu',align:'center',width:'34%',formatter:TitleFormatter">备注</th>
+
+                <th data-options="field:'riqi',align:'center',width:'20%',formatter:formatDatebox">日期</th>
+            </tr>
+        </thead>
+    </table>
+
+
+    <div id="toolbar" style="height: 32px; padding: 2px 5px; background:#ddd;">
+
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="newliucheng()">新 增</a>
+        </div>
+
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="editliucheng()">编 辑</a>
+        </div>
+
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="destroyliucheng()">删 除</a>
+        </div>
+
+        @*<div style="float: right">
+            <input class="easyui-searchbox" data-options="prompt:'请输入部门名称进行查询',searcher:doSearch" style="width:200px">
+        </div>*@
+    </div>
+
+
+    <div id="dlg" class="easyui-dialog" style="width:560px;height:350px;padding:10px 20px" data-options="closed:'true',buttons:'#dlg-buttons'">
+        <div class="ftitle">主流程设置</div>
+        <form id="fm" method="post" novalidate>
+            <div class="fitem">
+                <label>流程名称:</label>
+                <input id="mingcheng" name="mingcheng" class="easyui-textbox" data-options="icons:[],validType:'checknameissame'" style="width:350px;height:30px" required>
+            </div>
+
+            <div class="fitem" id="bumen">
+                <label>所属部门:</label>
+                <select id="suoshubumen" name="suoshubumen" class="easyui-combobox" style="width:350px;height:30px" data-options="editable:false,panelHeight:'auto'" required>
+                    @foreach (var item in ViewBag.suoshubumen)
+                    {
+                        <option value="@item">@item</option>
+                    }
+                </select>
+            </div>
+            <div class="fitem">
+                <label>流程备注:</label>
+                <input id="beizhu" name="beizhu" class="easyui-textbox" data-options="multiline:true,icons:[]" style="width:350px;height:100px">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons" style="text-align:center;padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" onclick="saveliucheng()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+
+</div>
+
+@section footer{
+    <script type="text/javascript">
+        var url;
+        $(function () {
+            $("#liucheng").datagrid({
+                singleSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Liuchengshezhi/Getliucheng',
+                toolbar: '#toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                //nowrap: false,
+                fit: true,
+                autoRowheight: false,
+                queryParams: {
+                    //searchquery: ''
+                },
+            });
+            //设置分页控件
+
+            var p = $('#liucheng').datagrid('getPager');
+
+            $(p).pagination({
+                pageSize: 10,//每页显示的记录条数，默认为10
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+                beforePageText: '第',//页数文本框前显示的汉字
+                afterPageText: '页    共 {pages} 页',
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+
+            $('#mingcheng').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#beizhu').textbox().textbox('addClearBtn', 'icon-clear');
+        });
+
+        //用来验证文本框中的内容是否已经存在（即重名）
+        $.extend($.fn.validatebox.defaults.rules, {
+            checknameissame: {
+                validator: function (value, param) {
+                    var name = value.trim();
+                    var result = "";
+                    $.ajax({
+                        type: 'post',
+                        async: false,
+                        url: '/Liuchengshezhi/CheckNameIsSame',
+                        data: {
+                            "name": name
+                        },
+                        success: function (data) {
+                            result = data;
+                        }
+                    });
+                    return result.indexOf("True") == 0;
+                },
+                message: '该名称已经被占用'
+            }
+        });
+
+        $.extend($.fn.combobox.methods, {
+            selectedIndex: function (jq, index) {
+                if (!index)
+                    index = 0;
+                var data = $(jq).combobox('options').data;
+                var vf = $(jq).combobox('options').valueField;
+                $(jq).combobox('setValue', eval('data[index].' + vf));
+            }
+        });
+
+        //当字数太长，限定只显示前面一部分
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '<a href="#" title="' + value + '" class="easyui-tooltip"></a>';
+                return ss
+            }
+            else {
+                if (value1.length > 24) {
+                    value1 = value1.substr(0, 24) + "...";
+                }
+                var ss = '<a href="#" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function Formatter_liucheng(value, row, index) {            
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 15) {
+                    value1 = value1.substr(0, 15) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" onclick="zibiao(' + index + ')" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function zibiao(index) {            
+            $('#liucheng').datagrid('selectRow', index);
+            var row = $('#liucheng').datagrid('getSelected');
+            if (row) {
+                var mingcheng = row.mingcheng;
+                var id = row.id;
+                //var xmmulu = row.Xiangmumulu;                
+                var tabTitle = mingcheng+"&nbsp"+"子表"  ;
+                var url = "/Liuchengshezhi/Zibiaoindex?mingcheng=" + mingcheng + "&id=" + id;
+                var icon = "icon-shenhe";
+                window.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+
+        //文本框有输入之后文本框末尾有删除符号出现
+        $.extend($.fn.textbox.methods, {
+            addClearBtn: function (jq, iconCls) {
+                return jq.each(function () {
+                    var t = $(this);
+                    var opts = t.textbox('options');
+                    opts.icons = opts.icons || [];
+                    opts.icons.unshift({
+                        iconCls: iconCls,
+                        handler: function (e) {
+                            $(e.data.target).textbox('clear').textbox('textbox').focus();
+                            $(this).css('visibility', 'hidden');
+                        }
+                    });
+                    t.textbox();
+                    if (!t.textbox('getText')) {
+                        t.textbox('getIcon', 0).css('visibility', 'hidden');
+                    }
+                    t.textbox('textbox').bind('keyup', function () {
+                        var icon = t.textbox('getIcon', 0);
+                        if ($(this).val()) {
+                            icon.css('visibility', 'visible');
+                        } else {
+                            icon.css('visibility', 'hidden');
+                        }
+                    });
+                });
+            }
+        });
+
+        //function doSearch(value) {
+        //    $('#liucheng').datagrid('load', { "searchquery": value });
+        //};
+
+        function newliucheng() {
+            $('#dlg').dialog('open').dialog('setTitle', '新增流程');
+            $('#fm').form('clear');
+            $('#mingcheng').textbox({                
+                disabled: false
+            });
+            url = '/Liuchengshezhi/Saveliucheng';
+        };
+
+        function editliucheng() {
+            var row = $('#liucheng').datagrid('getSelected');
+            if (row) {
+                //var bmname = row.bmname;    
+                var id = row.id;
+                $('#dlg').dialog('open').dialog('setTitle', '编辑流程');                
+                $('#fm').form('load', row);
+                $('#mingcheng').textbox({
+                    value: row.mingcheng,
+                    disabled: true,                    
+                });
+                //url = '/Liuchengshezhi/Updateliucheng?bmname=' + bmname + '';
+
+                url = '/Liuchengshezhi/Updateliucheng?id='+id;
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要编辑的行！", "warning");
+            }
+        };
+
+        function saveliucheng() {
+            $('#fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                    $('#dlg').dialog('close');		// close the dialog
+                    $('#liucheng').datagrid('reload');	// reload the user data
+                    if (result.success == false) {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    }
+                    else {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        })
+                    }
+                },
+            })            
+        };
+
+        function destroyliucheng() {
+            var row = $('#liucheng').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('提示', '您确定要删除这条记录吗？', function (r) {
+                    if (r) {
+                        $.post('/Liuchengshezhi/Delliucheng', { id: row.id }, function (result) {
+                            if (result.success) {
+
+                                $('#liucheng').datagrid('reload');	// reload the user data
+
+                            } else {
+                                result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+
+                                $.messager.show({	// show error message
+                                    title: 'Error',
+                                    msg: result.Msg
+                                });
+                            }
+                        }, 'json');
+                    };
+                });
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要删除的行！", "warning");
+            }
+        };
+    </script>
+
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin-bottom: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}

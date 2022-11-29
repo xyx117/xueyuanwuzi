@@ -1,0 +1,88 @@
+﻿@using Microsoft.AspNet.Identity;
+@{
+    string id = User.Identity.GetUserId();
+}
+
+@if (Request.IsAuthenticated)
+{
+    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+    {
+        @Html.AntiForgeryToken()
+        <div class="t_right_top">
+            <ul>
+                <li id="timmer"></li>
+                <li><a href="javascript:document.getElementById('logoutForm').submit()">&nbsp;&nbsp;&nbsp;<img src='~/Content/image/quit.png' title='注销'/> 注销</a></li>
+            </ul>
+        </div>        
+        <div class="t_right_user">
+            <div style="text-align:right" id="usenameandrole"> </div>
+        </div>
+    }
+}
+else
+{
+    <ul class="nav navbar-nav navbar-right">
+        <li>@Html.ActionLink("登录", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink" })</li>
+    </ul>
+}
+
+<link href="~/Content/top-right.css" rel="stylesheet">
+<script type="text/javascript">
+    $(function () {
+        //提取用户的登录名和角色
+        var loginid = '@id';
+        $.ajax({
+            type: 'post',
+            async:true,
+            url: '/Account/Getusernameandrole',
+            data: {
+               "id": loginid
+            },
+            //contentType: 'application/json; charset=utf-8', 加了这两句，控制器反而收不到id，所有这要特别注意的！！
+            //dataType:'json ',
+            success: function (data) {
+                data = JSON.parse(data);
+                if (data.success) {
+                    $("#usenameandrole").html("您好！ " + data.loginname + " (" + data.loginrole + ")");                    
+                } else {
+                    $("#usenameandrole").html(data.msg);                   
+                }
+            }
+        });
+        // 计时
+        runTimmer();
+        setInterval("runTimmer()", 1000);
+    });
+
+    var getFormatStr = function (num) {
+        if (num < 10) {
+            return "0" + num;
+        } else {
+            return num;
+        }
+    };
+    var runTimmer = function () {
+        var now = new Date();
+        var year = now.getFullYear();
+        var month = now.getMonth() + 1;
+        var day = now.getDay();
+        var week;
+        switch (day) {
+            case 0: week = "星期日"; break;
+            case 1: week = "星期一"; break;
+            case 2: week = "星期二"; break;
+            case 3: week = "星期三"; break;
+            case 4: week = "星期四"; break;
+            case 5: week = "星期五"; break;
+            case 6: week = "星期六"; break;
+        }
+        var date = now.getDate();
+        var hours = now.getHours();
+        var minutes = now.getMinutes();
+        var seconds = now.getSeconds();
+        var timmer = "" + year + "年" + getFormatStr(month) + "月" + getFormatStr(date) + "日"
+        + "&nbsp;&nbsp;" + getFormatStr(hours) + ":" + getFormatStr(minutes) + ":" + getFormatStr(seconds) + "&nbsp;&nbsp;" + week;
+        $("#timmer").html(timmer);
+        now = null;
+    };
+</script>

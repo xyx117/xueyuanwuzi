@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    @*<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">*@
+
+
+    <meta name="renderer" content="ie-stand">
+
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">     @*响应式设置*@
+
+    <title>海南师范大学信息学院物资管理系统</title>
+
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/themes/color.css">
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/demo/demo.css">
+    <link href="~/Content/css/bootstrap-responsive.css" rel="stylesheet">         @*响应式设置引用*@
+
+    <script type="text/javascript" src="~/Scripts/Easyui-1.8.1/jquery.min.js"></script>
+    <script type="text/javascript" src="~/Scripts/Easyui-1.8.1/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="~/Scripts/Easyui-1.8.1/locale/easyui-lang-zh_CN.js"></script>
+
+    <script type="text/javascript" src="~/Scripts/Easyui-1.8.1/easyuiExtension.js"></script>
+
+
+
+    @*<link rel="stylesheet" type="text/css" href="~/Scripts/Easyui/themes/default/easyui.css">
+        <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui/themes/icon.css">
+        <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui/themes/color.css">
+        <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui/demo/demo.css">
+        <script type="text/javascript" src="~/Scripts/Easyui/jquery.min.js"></script>
+        <script type="text/javascript" src="~/Scripts/Easyui/jquery.easyui.min.js"></script>
+        <script type="text/javascript" src="~/Scripts/Easyui/locale/easyui-lang-zh_CN.js"></script>
+
+        <script type="text/javascript" src="~/Scripts/Easyui/easyuiExtension.js"></script>*@
+
+
+</head>
+<body >
+
+    @*<div class="container body-content">
+
+        @RenderBody()
+
+        @RenderSection("footer", false)
+    </div>*@
+
+    @RenderBody()
+
+    @RenderSection("footer", false)
+
+    @*@Scripts.Render("~/bundles/jquery")
+        @Scripts.Render("~/bundles/bootstrap")
+        @RenderSection("scripts", required: false)*@
+</body>
+</html>

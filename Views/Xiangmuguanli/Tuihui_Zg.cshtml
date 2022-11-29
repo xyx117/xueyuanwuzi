@@ -1,0 +1,402 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Tuihui_Zg";
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+}
+
+<table id="xiangmu" class="easyui-datagrid" style="height:auto;width:100%">
+    <thead>
+        <tr>
+            <th data-options="field:'id',align:'center',width:'1%'" hidden>id</th>
+
+            <th data-options="field:'xiangmumingcheng',align:'center',width:'25%',formatter:TitleFormatter">项目名称&nbsp;<i style="color:red">(点击链接查看内容)</i></th>
+
+            <th data-options="field:'jine',align:'center',width:'8%'">金额(元)</th>
+
+            <th data-options="field:'shenqingren',align:'center',width:'5%'">申请人</th>
+
+            <th data-options="field:'chehui_realname',align:'center',width:'6%'">撤回人</th>
+
+            <th data-options="field:'shenheliucheng',align:'center',width:'14%',formatter:liucheng_tooltip">审核流程</th>
+
+            <th data-options="field:'shenhezhuangtai',align:'center',width:'4%',formatter:shenhe_zhuangtai">状态</th>
+
+            <th data-options="field:'shenherizhi',align:'center',width:'4%',formatter:liucheng_rizhi">日志</th>
+
+            <th data-options="field:'action1',align:'center',width:'6%',formatter: action_shenhe">操作</th>
+
+            <th data-options="field:'riqi',align:'center',width:'9%',formatter:formatDatebox">申请日期</th>
+
+            <th data-options="field:'file',align:'center',width:'5%',formatter:file_action">附件</th>
+
+            <th data-options="field:'beizhu',align:'center',width:'15%',formatter: beizhu_style">备注</th>
+        </tr>
+    </thead>
+</table>
+
+<div id="toolbar" style="height: 32px; padding: 2px 5px; background:#ddd;">
+    <div style="float: right">
+        <input class="easyui-searchbox" data-options="prompt:'请输入项目名称进行查询',searcher:doSearch" style="width:300px">
+    </div>
+</div>
+
+@*审核弹出对话框  *@
+<div id="shenhe_dlg" class="easyui-dialog" style="width:470px;height:auto;padding:10px 20px" data-options="closed:'true',buttons:'#shenhe_bmfzr_dlg'">
+    <center>
+        <form id="fm_shenhe" method="post" novalidate>
+            <table cellpadding="5">
+                <tr>
+                    <td><strong>审核结果:</strong></td>
+                    <td>           @*这里的操作只能是一路撤回*@
+                        <input type="radio" name="shenhe" value="通过" hidden><span hidden>通过</span>
+                        <input type="radio" name="shenhe" value="未通过" hidden><span hidden>未通过</span>
+                        <input type="radio" name="shenhe" value="撤回" required><span>撤回</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>审核意见：</strong></td>
+                    <td>
+                        <input id="yijian" name="yijian" class="easyui-textbox" data-options="multiline:true" style="width:300px;height:70px">
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </center>
+</div>
+<div style="text-align:center;padding:5px" id="shenhe_bmfzr_dlg">
+    <a href="javascript:void(0)" id="save_btn" class="easyui-linkbutton" data-options="iconCls:'icon-ok',plain:true" onclick="shenhe_save()">确定</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#shenhe_dlg').dialog('close')" style="width:80px">取消</a>
+</div>
+
+@section footer{
+    <script type="text/javascript">
+        var url,loingid='@loingid',username='@username';
+        $(function () {
+            $("#xiangmu").datagrid({
+                singleSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Xiangmuguanli/Get_tuihui_Zg', //
+                toolbar: '#toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                //nowrap: false,
+                fit: true,
+                autoRowheight: false,
+                queryParams: {
+                    searchquery: '',
+                    loingid: loingid,
+                    username:username
+                },
+                //为datagrid中的操作链接样式 设置一个按钮图形
+                onLoadSuccess: function (data) {
+                    //提交
+                    $('.shenhe').linkbutton({ plain: true });
+                    $('.shenhe').addClass("c6");
+
+                    $('.shenhe_jin').linkbutton({ disabled: true });
+                    $('.shenhe_jin').addClass("c6");
+
+                    $('.tijiao').linkbutton({ plain: true });
+                    $('.tijiao').addClass("c6");
+                    $('.tijiao_jin').linkbutton({ disabled: true });
+                    $('.tijiao_jin').addClass("c6");
+                }
+            });
+
+            var p = $('#xiangmu').datagrid('getPager');
+
+            $(p).pagination({
+
+                pageSize: 10,//每页显示的记录条数，默认为10
+
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+
+                beforePageText: '第',//页数文本框前显示的汉字
+
+                afterPageText: '页    共 {pages} 页',
+
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+
+            $('#yijian').textbox().textbox('addClearBtn', 'icon-clear');
+        });
+
+        $.extend($.fn.combobox.methods, {
+            selectedIndex: function (jq, index) {
+                if (!index)
+                    index = 0;
+                var data = $(jq).combobox('options').data;
+                var vf = $(jq).combobox('options').valueField;
+                $(jq).combobox('setValue', eval('data[index].' + vf));
+            }
+        });
+
+        //当字数太长，限定只显示前面一部分
+        //当字数太长，限定只显示前面一部分 ，点击项目名，跳转到项目子表页面
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 15) {
+                    value1 = value1.substr(0, 15) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" onclick="xmzibiao(' + index + ')" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function beizhu_style(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 5) {
+                    value1 = value1.substr(0, 5) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        //限定项目名称在tabtitle中的长度
+        function changdu(xm_name) {
+            value1 = xm_name;
+            if (value1.length > 15) {
+                value1 = value1.substr(0, 15) + "...";
+            }
+            return value1;
+        };
+
+        function doSearch(value) {
+            $('#xiangmu').datagrid('load', { "searchquery": value, "loingid": loingid,"username":username});
+        };
+
+        //转到项目子表页面
+        function xmzibiao(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var name = row.xiangmumingcheng;
+                var id = row.id;
+                var tabTitle = "添加子资产：" + changdu(name);
+                var url = "/Xiangmuguanli/Xiangmuzibiao?xmid=" + id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+
+        //文本框有输入之后文本框末尾有删除符号出现
+        $.extend($.fn.textbox.methods, {
+            addClearBtn: function (jq, iconCls) {
+                return jq.each(function () {
+                    var t = $(this);
+                    var opts = t.textbox('options');
+                    opts.icons = opts.icons || [];
+                    opts.icons.unshift({
+                        iconCls: iconCls,
+                        handler: function (e) {
+                            $(e.data.target).textbox('clear').textbox('textbox').focus();
+                            $(this).css('visibility', 'hidden');
+                        }
+                    });
+                    t.textbox();
+                    if (!t.textbox('getText')) {
+                        t.textbox('getIcon', 0).css('visibility', 'hidden');
+                    }
+                    t.textbox('textbox').bind('keyup', function () {
+                        var icon = t.textbox('getIcon', 0);
+                        if ($(this).val()) {
+                            icon.css('visibility', 'visible');
+                        } else {
+                            icon.css('visibility', 'hidden');
+                        }
+                    });
+                });
+            }
+        });
+        
+        function action_shenhe(value, row, index) {     
+                       
+            if (row.chehuiren.indexOf(loingid)>=0) {   //搜索值，在字符串中开始出现的位置，从 0 开始，没有就是 -1
+                //这里要用一个包含进行判断   包含的话就是有 登录者本人的记录，就把审核功能禁用掉
+                return "<a href='javascript:void(0)' style='width:80%' class='shenhe_jin' target='mainFrame'>审核</a>";
+            } else {
+                return "<a href='javascript:void(0)' style='width:80%' class='shenhe' onclick='shenhe(" + index + ")' target='mainFrame'>审核</a>";
+            }
+
+            //if (row.chehuiren==loingid) {
+            //    return "<a href='javascript:void(0)' style='width:80%' class='shenhe_jin' target='mainFrame'>审核</a>";
+            //} else {
+            //    return "<a href='javascript:void(0)' style='width:80%' class='shenhe' onclick='shenhe(" + index + ")' target='mainFrame'>审核</a>";
+            //}            
+        };
+
+        
+
+        //审核操作弹出对话框
+        function shenhe(index) {
+            $('#fm_shenhe').form('clear');
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                $('#shenhe_dlg').dialog('open').dialog('setTitle', '流程审核');
+                var id = row.id;
+                url = '/Xiangmuguanli/Shenhe_liucheng?loingid='+loingid+'&username='+username+'&xmid='+id;
+            }
+        };
+
+        //审核操作弹出对话框后点击确认保存
+        function shenhe_save() {
+            $('#save_btn').linkbutton({ disabled: true });   //这里是为解决一个连击问题
+
+            $('#fm_shenhe').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                    if (result.success) {
+                        $('#shenhe_dlg').dialog('close');		// close the dialog
+                        $('#xiangmu').datagrid('reload');	// reload the user data
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    } else {
+                        $.messager.show({
+                            title: '错误提示',
+                            msg: result.Msg
+                        });
+                    }                    
+                }
+            });
+            $('#save_btn').linkbutton({ disabled: false });   //这里是为解决一个连击问题
+        };
+
+        //鼠标滑过流程时显示流程参与人  ，这里的 onmouseover 参数如果换成  string 类型的值 在 tooltip（）中取不到值
+        function liucheng_tooltip(value, row, index) {
+            var liuchengID = row.liuchengID;
+            if (value.length > 0) {
+                return ss = '<a id="yg' + index + '" href="javascript:;" onmouseover="tooltip(' + liuchengID + ',' + index + ')">' + value + '</a>';
+            }
+            else {
+                return value;
+            };
+        };
+
+        function tooltip(liuchengID, index) {
+            $.post('/Xiangmuguanli/Liucheng_tooltip', { liuchengID: liuchengID }, function (result) {
+                if (result.success) {
+                    var ygh = "#yg" + index;
+                    $(ygh).tooltip({ content: result.Msg });
+                }
+            }, 'json');
+        };
+
+        //审核状态
+        function shenhe_zhuangtai(value, row, index) {
+            var shenhe = row.shenhezhuangtai;
+            //var xulie = row.shenhexulie; 
+            var goumaizhuangtai = row.goumaizhuangtai;
+            var dingdanshouhuo = row.dingdanshouhuo;
+            switch (shenhe) {
+                case "通过":
+                    if (dingdanshouhuo == "已收货") {
+                        return "<Image src='/Scripts/easyui/themes/icons/basket.png' Title='已收货' />";
+                    } else {
+                        if (goumaizhuangtai == "已购买") {
+                            return "<Image src='/Scripts/easyui/themes/icons/cart_put.png' Title='已购买' />";
+                        } else {
+                            return "<Image src='/Scripts/easyui/themes/icons/ok.png' Title='通过' />";
+                        }
+                    }
+                    break;
+                case "未通过": return "<Image src='/Scripts/easyui/themes/icons/no.png' Title='未通过' />";
+                    break;
+                case "审核中": return "<Image src='/Scripts/easyui/themes/icons/zoom.png' Title='审核中' />";
+                    break;
+                case "已提交": return "<Image src='/Scripts/easyui/themes/icons/tijiao.png' Title='审核中' />";
+                    break;
+                case "未提交": return "<Image src='/Scripts/easyui/themes/icons/question.png' Title='未提交' />";
+                    break;
+                case "撤回": return "<Image src='/Scripts/easyui/themes/icons/back_new.png' Title='撤回'/>";
+                    break;
+            }
+        };
+
+        //审核日志
+        function liucheng_rizhi(value, row, index) {
+            return "<Image src='/Scripts/easyui/themes/icons/book.png' Title='审核中' onclick='rizhi(" + index + ")'/>";
+        };    
+
+        function rizhi(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var name = row.xiangmumingcheng;
+                var id = row.id;
+                var tabTitle = "审核日志：" + changdu(name);
+                var url = "/Xiangmuguanli/Shenhe_rizhi?xmname=" + name + "&xmid=" + id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+
+
+        //跳转到附件上传页面
+        function file_action(value, row, index) {
+            return "<a href='javascript:void(0)' style='width:80%' class='tijiao' onclick='file(" + index + ")' target='mainFrame'>附件</a>";
+        };
+
+        function file(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var name = row.xiangmumingcheng;
+                var id = row.id;
+                var tabTitle = "项目附件：" + changdu(name);
+                var url = "/Xiangmuguanli/File_upload?xmid=" + id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+    </script>
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin-bottom: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+

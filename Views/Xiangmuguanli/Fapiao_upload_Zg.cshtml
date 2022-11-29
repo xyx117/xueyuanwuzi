@@ -1,0 +1,453 @@
+﻿@using Microsoft.AspNet.Identity
+@model IEnumerable<wzgl.Models.Fapiao_upload>
+@{
+
+    ViewBag.Title = "Fapiao_upload_Zg";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var id = ViewBag.id;   //订单主表ID ，guid类型
+    var fapiaohao = ViewBag.fapiao;
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+    var biaoxiao = ViewBag.biaoxiao;
+}
+<div class="container-fluid">
+
+    <div class="row clearfix">
+        <div class="col-md-12 column">          
+            <label>当前发票号：</label>@fapiaohao
+        </div>
+
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span12">                   
+                    <div class="input-group ">
+                        <span class="input-group-addon">填写发票号</span>
+                        <input type="text" class="form-control" id="fapiaohao" placeholder="例如：12006989-12007048 或 12006989，12007048">
+                        <button class="btn btn-large btn-primary" type="button" onclick="fapiao_action1('@id')" style="margin-left:10px;">保存</button>
+                        @*<button class="btn btn-large btn-primary" type="button" onclick="fapiao_action1('@id')" style="margin-left:10px">保存并关闭页面</button>*@
+                    </div>
+                </div>                
+            </div>
+        </div>
+    </div>
+
+
+    @* float:right div 中的元素也可以漂浮，这里浪费了很长时间  *@
+    @*<div class="row-fluid">
+        <div class="span10">
+            <h3>
+                发票号：@fapiaohao
+            </h3>
+        </div>
+        <div class="span2">
+            <button class="btn-primary btn-lg" type="button" onclick="fapiao_action('@id')" style="padding-top:15px;float:right;width:120px">发票号</button>
+        </div>
+    </div>*@
+
+</div>
+
+@if (biaoxiao == "同意报销")
+{
+    @*<form style="margin-top:10px;width:99%;" hidden>
+            <div class="file-loading" style="margin:0px auto;">
+                <input id="file-Portrait1" name="file" type="file" multiple>
+            </div>
+        </form>
+        <div style="margin:10px 10px 10px 5px;" hidden>
+            <button type="button" class="btn btn-success" onclick="refresh()">刷新图片墙</button>
+        </div>*@
+}
+else
+{
+    <div class="container-fluid">
+        <div class="row clearfix">
+            <div class="col-md-12 column">
+                <form style="margin-top:10px;width:99%;">
+                    <div class="file-loading" style="margin:0px auto;">
+                        <input id="file-Portrait1" name="file" type="file" multiple>
+                    </div>
+                </form>
+                <div style="margin:10px 10px 10px 5px;">
+                    <button type="button" class="btn btn-success" onclick="refresh()">刷新图片墙</button>
+                </div>
+                <div class="input-group ">
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+}
+
+<div id="pic_show" style="width: 100%;">
+    @*这里用了一次局部视图*@
+    @*@Html.Partial("_Fapiao_zg", Model, new ViewDataDictionary() { { "biaoxiao", biaoxiao } })*@
+
+    @if (biaoxiao == "同意报销")
+    {
+        <div id="content" class="row-fluid" style="width:100%;">
+
+            @foreach (var item in Model)
+            {
+                <div class="col-sm-6 col-md-2" style="height:50%;width:50%;padding:5px;">
+                    <div class="thumbnail">
+                        <img src="/@item.Filepath@item.Filename"
+                             alt="通用的占位符缩略图">
+                        <div class="caption">
+                            <h5>发票名称：@item.Filename</h5>
+                            @*style="word-wrap: break-word;word-break: break-all;"  备注文字自动换行     *@
+                            <p>备注：@item.Beizhu</p>
+
+                            <div class="btn-group btn-group-justified">
+                                @*参数Beizhu要加上引号，因为这里是string类型，否则中文会无法识别活，文字会乱码*@
+                                @*<a href="#" class="btn btn-default" role="button" onclick="edt(@item.ID,'@item.Beizhu')"> 编辑</a>*@
+                                <a href="#" class="btn btn-primary" role="button" onclick="show('@item.Filepath','@item.Filename')">查看</a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div id="content" class="row-fluid" style="width:100%;">
+            @foreach (var item in Model)
+            {
+                <div class="col-sm-6 col-md-2" style="height:50%;width:50%;padding:5px;">
+                    <div class="thumbnail">
+                        <img src="~/@item.Filepath@item.Filename"
+                             alt="通用的占位符缩略图">
+                        <div class="caption">
+                            <h5>发票名称：@item.Filename</h5>
+                            @*style="word-wrap: break-word;word-break: break-all;"  备注文字自动换行     *@
+                            <p>备注：@item.Beizhu</p>
+
+                            <div class="btn-group btn-group-justified">
+                                <a href="#" class="btn btn-primary" role="button" onclick="del(@item.ID)">删除</a>
+
+                                @*参数Beizhu要加上引号，因为这里是string类型，否则中文会无法识别活，文字会乱码*@
+                                <a href="#" class="btn btn-default" role="button" onclick="edt(@item.ID,'@item.Beizhu')"> 编辑</a>
+                                <a href="#" class="btn btn-primary" role="button" onclick="show('@item.Filepath','@item.Filename')">查看</a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">提示</h4>
+            </div>
+            <div class="modal-body">
+                <h4>您确定要删除这张图片吗？</h4>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>取消</button>
+                <button type="button" id="btn_submit" class="btn btn-primary" data-dismiss="modal"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form action="saveSupplier" method="POST">
+    <div class="modal fade" id="myModal_edt" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel_edt">编辑</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="txt_statu">备注</label>
+                        <input type="text" name="beizhu" class="form-control" id="beizhu" placeholder="备注信息">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>关闭</button>
+                    <button type="button" id="btn_submit_edt" class="btn btn-primary" data-dismiss="modal"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+<form action="edt_fapiaohao" method="POST">
+    <div class="modal fade" id="myModal_fapiao" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel_edt">填写发票号</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="txt_statu">发票号</label>
+                        <input type="text" name="fapiao" class="form-control" id="fapiao" placeholder="例如：12006989-12007048 或 12006989，12007048">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>关闭</button>
+                    <button type="button" id="btn_fapiaohao" class="btn btn-primary" data-dismiss="modal"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+<div class="modal fade" id="myModal_show" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document" style="width:800px;height:auto">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                @*<h4 class="modal-title" id="myModalLabel_edt">查看</h4>*@
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                </div>
+                <image id="pic" style="width:100%;"></image>
+            </div>
+            @*<div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>关闭</button>
+                </div>*@
+        </div>
+    </div>
+</div>
+
+
+
+
+@section footer{
+    @*<link rel="stylesheet" type="text/css" href="~/Scripts/bootstrap-fileinput/css/fileinput_new.css">
+
+        <script src="~/Scripts/bootstrap.js"></script>
+        <script src="~/Scripts/bootstrap-fileinput/js/fileinput.js"></script>
+        <script src="~/Scripts/bootstrap-fileinput/js/locales/zh.js"></script>*@
+
+
+    <link rel="stylesheet" type="text/css" href="~/Content/bootstrap-fileinput/css/fileinput_new.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="~/Content/Site.css">
+
+    <script src="~/Scripts/bootstrap.js"></script>
+    <script src="~/Content/bootstrap-fileinput/js/fileinput.js"></script>
+    <script src="~/Content/bootstrap-fileinput/js/locales/zh.js"></script>
+
+    <script>
+        $(document).on('ready', function() {
+            $("#file-Portrait1").fileinput({
+                showUpload: false,
+                dropZoneEnabled: false,
+                maxFileCount: 10,
+                mainClass: "input-group-lg",
+                uploadUrl: "/Xiangmuguanli/UpLoadProcessfile?id=@id&loingid=@loingid",
+                language:'zh',
+                showUpload: true,
+                //allowedFileTypes: ['jpg', 'gif', 'png','jpeg']
+            });
+        });
+
+        //  分部视图的脚本 写在父页面可以读取出来
+        function del(id) {
+            //alert("d");
+            $('#myModal').modal();
+            $("#btn_submit").on("click", function () {
+                $.ajax({
+                    type: "POST", //提交的类型
+                    url: "/Xiangmuguanli/Feupld_del_bootstrap",//提交地址
+                    data: "id=" + id + "",//参数
+                    success: function (data) {
+                        if (data.success==true) {
+                            location.replace("/Xiangmuguanli/Fapiao_upload_Zg/?id=@id");
+                    } else {
+
+                        };
+                    }
+                });
+            });
+        };
+
+        //分部视图的脚本 写在父页面可以读取出来
+        function edt(id, beizhu) {
+            $('#myModal_edt').modal();
+            $('#beizhu').val(beizhu);
+            $("#btn_submit_edt").on("click", function () {
+                var beizhu = $('#beizhu').val();
+                $.ajax({
+                    type: "POST", //提交的类型
+                    url: "/Xiangmuguanli/Fapiao_edit_beizhu",//提交地址
+                    data: "id=" + id + "&beizhu=" + beizhu + "",//参数
+                    success: function (result) {
+                        if (result.success == true) {
+                            //alert("d");
+                            location.replace("/Xiangmuguanli/Fapiao_upload_Zg/?id=@id");
+                    } else {
+
+                        };
+                    }
+                });
+            });
+        };
+
+
+        //有输入框的发票号填写
+        function fapiao_action1(id) {            
+            var fapiaohao = $('#fapiaohao').val();            
+            $.ajax({
+                type: "POST", //提交的类型
+                url: "/Xiangmuguanli/Fapiaohao_edt",//提交地址
+                data: "id=" + id + "&fapiaohao=" + fapiaohao + "",//参数
+                success: function (result) {
+                    //alert(result);
+                    if (result.success == true) {
+                        //alert(id);
+                        location.replace("/Xiangmuguanli/Fapiao_upload_Zg/?id="+id);
+                    } else {
+                        //alert(id);          //这里执行不到是怎么回事          放在from表单中执行不到这里
+                        location.replace("/Xiangmuguanli/Fapiao_upload_Zg/?id=" + id);
+                    };
+                }
+            });
+        };
+
+        //弹出填写发票的输入框
+        function fapiao_action(id) {
+            $('#myModal_fapiao').modal();
+            $("#btn_fapiaohao").on("click", function () {
+                var fapiaohao = $('#fapiao').val();
+                $.ajax({
+                    type: "POST", //提交的类型
+                    url: "/Xiangmuguanli/Fapiaohao_edt",//提交地址
+                    data: "id=" + id + "&fapiaohao=" + fapiaohao + "",//参数
+                    success: function (result) {
+                        if (result.success == true) {
+                            location.replace("/Xiangmuguanli/Fapiao_upload_Zg/?id=@id");
+                        } else {
+                                location.replace("/Xiangmuguanli/Fapiao_upload_Zg/?id=@id");
+                        };
+                    }
+                });
+            });
+        };
+
+
+
+
+        //分部视图的脚本 写在父页面可以读取出来
+        function show(path, name) {
+            //用js原生方法：
+            //document.getElementById("imageId").src = "xxxx.jpg";
+            //用Jquery方法：
+            //$("#imageId").attr("src", "xxxx.jpg");
+
+            var pic_path = "/" + path + name;
+
+            $("#pic").attr("src", pic_path);       //这两个都可以
+
+            //document.getElementById("pic").src = pic_path;
+            $('#myModal_show').modal();
+        };
+
+        function refresh() {
+            @*$("#pic_show").load("/Xiangmuguanli/Fapiao_upload_Zg_test1/?mulu=@mulu&id=@id");*@
+            //location.reload([]);   //相当于执行 f5
+            location.replace("/Xiangmuguanli/Fapiao_upload_Zg/?id=@id");
+        };
+
+        //导入文件上传完成之后的事件
+        $("#file-Portrait1").on("fileuploaded", function (event, data, previewId, index) {
+            $('#upload_dg').datagrid('reload');
+            setTimeout(5000);
+
+            location.replace("/Xiangmuguanli/Fapiao_upload_Zg/?id=@id");
+        });
+
+        function feupld_edt() {
+            var row = $('#upload_dg').datagrid('getSelected');
+            if (row) {
+                var id = row.id;
+                $('#dlg').dialog('open').dialog('setTitle', '编辑发票备注');
+                $('#fm').form('load', row);
+                url = '/Xiangmuguanli/Fapiao_edit_beizhu?id=' + id;
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要编辑的行！", "warning");
+            }
+        };
+
+        function savebeizhu() {
+            $('#fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                    $('#dlg').dialog('close');		// close the dialog
+                    $('#upload_dg').datagrid('reload');	// reload the user data
+                    if (result.success) {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    }
+                    else {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        })
+                    }
+                },
+            })
+        };
+
+        function feupld_del() {
+            var row = $('#upload_dg').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('提示', '您确定要删除这条记录吗？', function (r) {
+                    if (r) {
+                        $.post('/Xiangmuguanli/Feupld_del', { zhu_id: row.id, path: row.filepath, name: row.filename }, function (result) {
+                            //这里把主键更改为项目名称后需要变动
+                            //$.post('/xiangmuguanli/delXiangmu', { xmname: row.XmName }, function (result) {
+                            if (result.success) {
+                                $('#upload_dg').datagrid('reload');	// reload the user data
+                                $.messager.show({	// show error message
+                                    title: '提示',
+                                    msg: result.errorMsg
+                                });
+                            } else {
+                                $.messager.show({	// show error message
+                                    title: '错误提示',
+                                    msg: result.errorMsg
+                                });
+                            }
+                        }, 'json');
+                    }
+                });
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要删除的行！", "warning");
+            }
+        };
+
+        //附件下载
+        function rowformater(value, row, index) {
+            if (row) {
+                var filename = row.filename;
+                var filepath = row.filepath;
+                return "<a href='GetFile?filename=" + filename + "&filepath=" + filepath + "'>下载</a>";    //直接指向control，不需要经过filexiazai()
+            }
+        };
+    </script>
+
+}

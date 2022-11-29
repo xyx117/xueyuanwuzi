@@ -1,0 +1,239 @@
+﻿@using Microsoft.AspNet.Identity
+@*@model IEnumerable<wzgl.Models.ApplicationUser>*@
+@{
+    ViewBag.Title = "Xiangmuzibiao_shouhuo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+    int xmid = ViewBag.xmid;
+    //string mulu = ViewBag.mulu;
+}
+
+<table id="xiangmu" class="easyui-datagrid" style="height:auto;width:100%">
+    <thead>
+        <tr>
+            <th data-options="field:'id',align:'center',width:'5%'" hidden>id</th>
+
+            <th data-options="field:'xiangmumingcheng',align:'center',width:'24%',formatter:TitleFormatter">设备名称</th>
+
+            <th data-options="field:'guige',align:'center',width:'9%',formatter:guige_style">规格</th>
+
+            <th data-options="field:'xinghao',align:'center',width:'9%',formatter:guige_style">型号</th>
+
+            <th data-options="field:'danjia',align:'center',width:'6%'">单价<br />(元)</th>
+
+            <th data-options="field:'shuliang',align:'center',width:'6%'">数量</th>
+
+            <th data-options="field:'jine',align:'center',width:'6%'">金额<br />(元)</th>
+
+            <th data-options="field:'shenqingren',align:'center',width:'6%'">申请人</th>
+
+            <th data-options="field:'jingshouren',align:'center',width:'6%'">经手人</th>
+
+            <th data-options="field:'weixiuhuoxinzeng',align:'center',width:'6%'">维修或<br />新增</th>
+
+            <th data-options="field:'riqi',align:'center',width:'8%',formatter:formatDatebox">申请日期</th>
+
+            <th data-options="field:'beizhu',align:'center',width:'10%',formatter: beizhu_style">备注</th>
+
+            <th data-options="field:'action1',align:'center',width:'5%',formatter: action_shouhuo">操作</th>
+
+        </tr>
+    </thead>
+</table>
+
+
+@*员工收货对话框*@
+<div id="shouhuo_dlg" class="easyui-dialog" style="width:500px;height:160px;padding:10px 20px" data-options="closed:'true',buttons:'#shouhuo_btn'">
+    <center>
+        <form id="shouhuo_fm" method="post" novalidate>
+            <p style="font-size:20px;padding:15px 20px"><strong>您确定已经收到订单货物了吗？</strong></p>
+
+            @*<div class="fitem" id="bumen">
+                <label>经手人:</label>
+                <select id="jingshouren" name="jingshouren" class="easyui-combobox" style="width:350px;height:30px" data-options="editable:false,panelHeight:'auto'" required>            
+                    @foreach (var item in Model)
+                    {
+                        <option value=@item.Id>@item.Zhenshiname (@item.Role)</option>
+                    }
+                </select>
+            </div>*@
+        </form>
+    </center>
+</div>
+<div id="shouhuo_btn" style="text-align:center;padding:5px">
+    <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" id="save_btn" onclick="shouhuo_save()" style="width:90px">确定</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#shouhuo_dlg').dialog('close')" style="width:90px">取消</a>
+</div>
+
+
+@section footer{
+    <script type="text/javascript">
+        var url,loingid='@loingid',xmid='@xmid';
+        $(function () {
+            $("#xiangmu").datagrid({
+                singleSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Xiangmuguanli/Get_xmzibiao',
+                toolbar: '#toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                //nowrap: false,
+                fit: true,
+                autoRowheight: false,
+                queryParams: {
+                    searchquery: '',
+                    xmid:xmid,
+                },
+                onLoadSuccess: function (data) {
+                    //提交
+                    $('.shouhuo').linkbutton({ plain: true });
+                    $('.shouhuo_jin').linkbutton({ plain: false });
+                    $('.shouhuo').addClass("c6");
+                }
+            });
+
+            var p = $('#xiangmu').datagrid('getPager');
+
+            $(p).pagination({
+                pageSize: 10,//每页显示的记录条数，默认为10
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+                beforePageText: '第',//页数文本框前显示的汉字
+                afterPageText: '页    共 {pages} 页',
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+
+        });
+
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 15) {
+                    value1 = value1.substr(0, 15) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function beizhu_style(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 5) {
+                    value1 = value1.substr(0, 5) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        //限规格显示字数
+        function guige_style(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 10) {
+                    value1 = value1.substr(0, 10) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function action_shouhuo(value, row, index) {
+            if (row.shouhuofou == "已收货") {
+                return "<a href='javascript:void(0)' style='width:80%' class='shouhuo_jin' target='mainFrame'>已收</a>";
+            } else {
+                return "<a href='javascript:void(0)' style='width:80%' class='shouhuo' onclick='shouhuo(" + index + ")' target='mainFrame'>收货</a>";
+            }
+        };
+
+        //员工收货操作
+        function shouhuo(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                $('#shouhuo_dlg').dialog('open').dialog('setTitle', '提示');
+                var zibiaoid = row.id;
+                url = "/Xiangmuguanli/Yg_shouhuo?loingid=" + loingid + "&zibiaoid=" + zibiaoid + "&id=" + xmid;    //mulu = " + mulu +" &
+            }
+        };
+
+        function shouhuo_save() {
+            $('#save_btn').linkbutton({ disabled: true });   //这里是为解决一个连击问题
+
+            $('#shouhuo_fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                    if (result.success) {
+                        $('#shouhuo_dlg').dialog('close');		// close the dialog
+                        $('#xiangmu').datagrid('reload');
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    }
+                    else {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    }                    
+                },
+            });
+            $('#save_btn').linkbutton({ disabled: false });   //释放连击被禁用的按钮
+        };
+
+
+    </script>
+
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin-bottom: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+
+
+

@@ -1,0 +1,56 @@
+﻿@*@model IEnumerable<wzgl.Models.Rukubiao>*@
+
+@model wzgl.Models.Rukubiao
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="content" class="row" style="width:98%;">
+    @*@foreach (var item in Model)
+        {          这里做一个笔记：因为接受模型为 一条的数据对象，这里只能使用   @model wzgl.Models.Rukubiao
+                    @model IEnumerable<wzgl.Models.Rukubiao>   接收的是多条返回的数据
+                    因为是单条数据，所以这里也没有必要使用  foreach  in  model
+        }*@
+
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span4">
+            </div>
+            <div class="span4">
+                <div class="caption">
+                    <p>物资编号：@Model.ID</p>
+
+                    <p>物资名称：@Model.Xiangmumingcheng</p>
+
+                    <p>规格：@Model.Guige</p>
+
+		            <p>类别：@Model.Rukuleibie</p>
+
+                    <p>单价：@Model.Danjia</p>
+
+                    <p>持有人：@Model.Chiyouren</p>
+
+                    <p>申请人：@Model.Shenqingren</p>
+
+                    <p>经手人：@Model.Jingshouren</p>
+
+                    <p>证明人：@Model.Zhengmingren</p>
+
+                    <p>入库日期：@Model.Rukuriqi</p>
+
+                    <p>备注：@Model.Beizhu</p>
+
+                </div>
+            </div>
+            <div class="span4">
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+
+@section footer{
+    <link href="~/Content/css/bootstrap-responsive.css" rel="stylesheet">         @*响应式设置引用*@
+}

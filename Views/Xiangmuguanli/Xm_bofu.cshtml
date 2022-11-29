@@ -1,0 +1,447 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Xm_bofu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+                                               //string mulu = ViewBag.mulu;
+}
+
+<div id="p" class="easyui-panel" style="padding:2px;" data-options="fit:true, border:false ">
+    <table id="xiangmu" class="easyui-datagrid" style="height:auto;width:100%;">
+        <thead>
+            <tr>
+                @*<th data-options="field:'ck',checkbox:true"></th>*@
+                <th data-options="field:'id',align:'center',width:'5%'" hidden>id</th>
+
+                <th data-options="field:'xiangmumingcheng',align:'center',width:'25%',formatter:TitleFormatter">仪器名称</th>
+
+                <th data-options="field:'guige',align:'center',width:'10%',formatter: guige_style">规格</th>
+
+                <th data-options="field:'xinghao',align:'center',width:'10%',formatter: guige_style">型号</th>
+
+                <th data-options="field:'danjia',align:'center',width:'6%'">单价(元)</th>
+
+                <th data-options="field:'rukuriqi',align:'center',width:'8%',formatter:formatDatebox">分配日期</th>
+
+                @*<th data-options="field:'shenqingren',align:'center',width:'6%'">申请人</th>
+
+                <th data-options="field:'jingshouren',align:'center',width:'6%'">经手人</th>*@
+
+                <th data-options="field:'zhengmingren',align:'center',width:'6%'">证明人</th>
+
+                @*<th data-options="field:'weixiuhuoxinzeng',align:'center',width:'6%'">维修或新增</th>*@
+
+                <th data-options="field:'baosunzhuangtai',align:'center',width:'6%',formatter:baosun_pic">报损</th>
+
+                <th data-options="field:'qr_code',align:'center',width:'5%',formatter: action_qr_code">二维码</th>
+
+                <th data-options="field:'beizhu',align:'center',width:'20%',formatter: beizhu_style">备注</th>
+            </tr>
+        </thead>
+    </table>
+
+    <div id="toolbar" style="height: 32px; padding: 2px 5px; background:#ddd;">
+        @*<div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="add_ruku()">新 增</a>
+        </div>
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="edt_ruku()">编 辑</a>
+        </div>*@
+
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="del_ruku()">删 除</a>
+        </div>
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="exl_ruku()">excel导入</a>
+        </div>
+        <div style="float: right">
+            <input class="easyui-searchbox" data-options="prompt:'请输入项目名称进行查询',searcher:doSearch" style="width:300px">
+        </div>
+
+    </div>
+
+    <div id="dlg" class="easyui-dialog" style="width:650px;height:400px;padding:10px 20px" data-options="closed:'true',buttons:'#dlg-buttons'">
+        <form id="fm" method="post" novalidate>
+            <div class="fitem" hidden>
+                <label>id:</label>
+                <input id="id" name="id" class="easyui-textbox">
+            </div>
+            <div class="fitem">
+                <label>仪器名称:</label>
+                <input id="xiangmumingcheng" name="xiangmumingcheng" class="easyui-textbox" data-options="icons:[]" style="width:400px;height:30px" required>
+            </div>
+            <div class="fitem">
+                <label>领用单位:</label>
+                <input id="lingyongdanwei" name="lingyongdanwei" class="easyui-textbox" data-options="icons:[]" style="width:400px;height:30px" required>
+            </div>
+            <div class="fitem">
+                <label>规格:</label>
+                <input id="guige" name="guige" class="easyui-textbox" data-options="multiline:true,icons:[]" style="width:400px;height:40px" required>
+            </div>
+            <div class="fitem">
+                <label>型号:</label>
+                <input id="xinghao" name="xinghao" class="easyui-textbox" data-options="multiline:true,icons:[]" style="width:400px;height:40px" required>
+            </div>
+            <div class="fitem">
+                <label>单价(元):</label>
+                <input id="danjia" name="danjia" class="easyui-textbox" data-options="validType:'numeric',icons:[]" style="width:400px;height:30px" required>
+            </div>
+            <div class="fitem">
+                <label>放置地点:</label>
+                <input id="fangzhididian" name="fangzhididian" class="easyui-textbox" data-options="validType:'positive_int',icons:[]" style="width:400px;height:30px" required>
+            </div>
+            <div class="fitem">
+                <label>备注:</label>
+                <input id="beizhu" name="beizhu" class="easyui-textbox" data-options="multiline:true,icons:[]" style="width:400px;height:60px">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons" style="text-align:center;padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" id="save_btn" onclick="save_ruku()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+
+
+    @*查看二维码*@
+    <div id="qrcode_dlg" class="easyui-dialog" style="width:560px;height:350px;padding:10px 20px" data-options="closed:'true',buttons:'#fenpei_btn'">
+        <center>
+            <img id="qrcode_img" style="height:40%;width:40%;margin-top:15px" />
+        </center>
+    </div>
+    <div id="fenpei_btn" style="text-align:center;padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#qrcode_dlg').dialog('close')" style="width:90px">关闭</a>
+    </div>
+
+
+    <div id="excel_dlg" class="easyui-dialog" style="width:450px;height:380px;padding:10px 20px" data-options="closed:'true',buttons:'#cgpz_exl_btn'">
+        <div class="ftitle"></div>
+        <form id="excel_fm" method="post" novalidate style="height:200px" enctype="multipart/form-data">
+            @*enctype="multipart/form-data"  这个属性不能缺少，否则找不到文件*@
+            <div class="fitem">
+                <p style="color: Red; text-align: center;">
+                    @Html.ActionLink("下载模版", "GetexcelFile", new { mobanname = "bofu_ruku" })
+                </p>
+            </div>
+            <div class="fitem">
+                <label>选择文件：</label>
+                <input id="files" name="files" class="easyui-filebox" style="width:60%;height:30px">
+            </div>
+            <div class="fitem">
+                <label>更新模式：</label>
+                <select id="gengxinmoshi" name="gengxinmoshi" class="easyui-combobox" style="width:150px;height:30px">
+                    <option value="zhuijia" selected>追加</option>
+                    <option value="fugai">覆盖</option>
+                </select>
+            </div>
+        </form>
+    </div>
+    <div id="cgpz_exl_btn" style="text-align:center;padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" id="save_btn_exl" onclick="excel_save()" style="width:90px;">导入</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript:$('#excel_dlg').dialog('close')" style="width:90px;">取消</a>
+    </div>
+
+</div>
+@section footer{
+    <script type="text/javascript">
+        var url,loingid='@loingid';
+        $(function () {
+            $("#xiangmu").datagrid({
+                singleSelect: true,
+                //selectOnCheck: true,
+                //checkOnSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Xiangmuguanli/Get_xm_bofu',
+                toolbar: '#toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                //nowrap: false,
+                fit: true,
+                autoRowheight: false,
+                queryParams: {
+                    searchquery: '',                   
+                    loingid:'@loingid'
+                },
+                onLoadSuccess: function (data) {
+                    //提交
+                    $('.fenpei').linkbutton({ plain: true });
+                    $('.fenpei_jin').linkbutton({ plain: false });
+                    $('.fenpei').addClass("c6");
+                }
+            });
+            var p = $('#xiangmu').datagrid('getPager');
+            $(p).pagination({
+                pageSize: 10,//每页显示的记录条数，默认为10
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+                beforePageText: '第',//页数文本框前显示的汉字
+                afterPageText: '页    共 {pages} 页',
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+        });
+        //对textbox进行验证
+        $.extend($.fn.textbox.defaults.rules, {            
+            numeric: {
+                validator: function (value, param) {
+                    if (value) {
+                        return /^[0-9]*(\.[0-9]+)?$/.test(value);
+                    } else {
+                        return true;
+                    }
+                },
+                message: '只能输入数值.'
+            }
+        });
+
+        function doSearch() {
+            $('#xiangmu').datagrid('load', { "searchquery": value, "loingid": loingid });
+        };
+
+        function add_ruku() {
+            $('#dlg').dialog('open').dialog('setTitle', '新增拨付项目');
+            $('#fm').form('clear');
+            url = '/Xiangmuguanli/Add_ruku?username=@username&loingid=@loingid';
+        };
+
+        function edt_ruku() {
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var id = row.id;
+                $('#dlg').dialog('open').dialog('setTitle', '编辑拨付项目');
+                $('#fm').form('load', row);
+                url = '/Xiangmuguanli/Edt_ruku?id='+id;
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要编辑的行！", "warning");
+            }
+        };
+
+        function del_ruku() {
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('提示', '您确定要删除这条记录吗？', function (r) {
+                    if (r) {
+                        $.post('/Xiangmuguanli/Del_ruku', { id: row.id }, function (result) {
+                            if (result.success) {
+                                $('#xiangmu').datagrid('reload');	// reload the user data
+                            } else {
+                                result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+
+                                $.messager.show({	// show error message
+                                    title: 'Error',
+                                    msg: result.errorMsg
+                                });
+                            }
+                        }, 'json');
+                    };
+                });
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要删除的行！", "warning");
+            }
+        };
+        
+        function save_ruku() {
+            $('#save_btn').linkbutton({ disabled: true });   //这里是为解决一个连击问题
+
+            $('#fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                    $('#dlg').dialog('close');		// close the dialog
+                    $('#xiangmu').datagrid('reload');	// reload the user data
+                    if (result.success == false) {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    }
+                    else {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        })
+                    }                    
+                },
+            });
+            $('#save_btn').linkbutton({ disabled: false });   //释放连击被禁用的按钮
+        };
+
+        function exl_ruku() {
+            $('#excel_dlg').dialog('open').dialog('setTitle', '拨付项目电子表格导入');
+            $('#files').filebox('clear');
+            $('#files').filebox({
+                buttonText: '选择文件',
+                buttonAlign: 'right'
+            })
+            url = '/Xiangmuguanli/Exl_ruku?loingid=@loingid&username=@username' ;
+        };
+
+        function excel_save() {
+            $('#save_btn_exl').linkbutton({ disabled: true });   //这里是为解决一个连击问题
+
+            $('#excel_fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {                    
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式
+                    $('#excel_dlg').dialog('close');		// close the dialog
+                    $('#xiangmu').datagrid('reload');	// reload the user data                   
+                    if (result.success == true) {
+                        $.messager.show({	// show error message
+                            title: '提示',
+                            msg: result.errorMsg
+                        });
+                        $('#excel_dlg').dialog('close');		// close the dialog
+                        $('#xiangmu').datagrid('reload');	// reload the user data
+                    } else {
+                        $.messager.show({
+                            title: '错误提示',
+                            msg: result.errorMsg
+                        });
+                    }                    
+                }
+            });
+            $('#save_btn_exl').linkbutton({ disabled: false });   //释放连击被禁用的按钮
+        };
+
+
+        //报损图标
+        function baosun_pic(value, row, index) {
+            if (row.qianshouzhuangtai == "已签收") {
+                return "<a href='javascript:void(0)' style='width:100%' class='fenpei' onclick='baosun(" + index + ")' target='mainFrame'>报损</a>";
+            } else {
+                return "<a href='javascript:void(0)' style='width:80%' class='fenpei_jin' target='mainFrame'>报损</a>";
+            }
+        };
+
+        function action_qr_code(value, row, index) {
+            return "<a href='javascript:void(0)' style='width:100%' class='fenpei' onclick='show_qr_code(" + index + ")' target='mainFrame'>查看</a>";
+        };
+
+        function show_qr_code(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            var url = row.qr_pic_url;
+            if (row) {
+                $('#qrcode_dlg').dialog('open').dialog('setTitle', '入库物资二维码');
+                //$('#qrcode_img').src = url;
+                $("#qrcode_img").attr("src", url);
+            }
+        };
+
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 15) {
+                    value1 = value1.substr(0, 15) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function guige_style(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 10) {
+                    value1 = value1.substr(0, 10) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function beizhu_style(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 5) {
+                    value1 = value1.substr(0,5) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function baosun() {
+            alert("报损流程待定")
+        }
+
+        //员工签收操作
+        function qianshou(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                $('#qianshou_dlg').dialog('open').dialog('setTitle', '入库物资签收');
+                var rukuid = row.id;
+                url = "/Xiangmuguanli/Yg_qianshou?id=" + rukuid + "";
+            }
+        };
+
+        //已签收提示
+        function yi_qianshou() {
+            $.messager.show({
+                title: '提示',
+                msg: "您已经签收，无需重复此次操作"
+            });
+        };
+
+        //已报损提示
+        function yi_baosun() {
+            $.messager.show({
+                title: '提示',
+                msg: "您已提交报损，无需重复此次操作!"
+            });
+        };
+        
+    </script>
+
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin-bottom: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 70px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+

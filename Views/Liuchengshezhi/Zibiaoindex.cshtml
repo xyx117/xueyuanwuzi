@@ -1,0 +1,285 @@
+﻿@model IEnumerable<wzgl.Models.ApplicationUser>
+@{
+    ViewBag.Title = "Zibiaoindex";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var rolelise = ViewBag.role;
+
+    var zhubiaoid = ViewBag.zhubiaoid;
+}
+
+<div id="p" class="easyui-panel" data-options="fit:true, border:false " style="padding:1px;">
+
+    <table id="liuchengzibiao" class="easyui-datagrid" title="位置：基本设置>>流程子表设置" style="height:auto;width:100%">
+        <thead>
+            <tr>
+                <th data-options="field:'id',align:'center',width:'1%'" hidden>ID</th>
+
+                <th data-options="field:'buzhouming',align:'center',width:'20%'">步骤名</th>
+
+                <th data-options="field:'liuchengxulie',align:'center',width:'15%'">流程序列</th>
+
+                <th data-options="field:'rolename',align:'center',width:'15%'">角色名</th>
+
+                <th data-options="field:'liuchengUsername',align:'center',width:'15%'">流程用户</th>
+
+                <th data-options="field:'zhenshiname',align:'center',width:'15%'">真实姓名</th>
+
+                <th data-options="field:'beizhu',align:'center',width:'20%'">备注</th>
+            </tr>
+        </thead>
+    </table>
+
+    <div id="toolbar" style="height: 32px; padding: 2px 5px; background:#ddd;">
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="newzibiao()">新 增</a>
+        </div>
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="editzibiao()">编 辑</a>
+        </div>
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="destroyzibiao()">删 除</a>
+        </div>
+    </div>
+
+    <div id="dlg" class="easyui-dialog" style="width:560px;height:380px;padding:10px 20px" data-options="closed:'true',buttons:'#dlg-buttons'">
+        <form id="fm" method="post" novalidate>
+            <div class="fitem">
+                <label>流程名称:</label>
+                <input id="buzhouming" name="buzhouming" class="easyui-textbox" data-options="icons:[]" style="width:350px;height:30px" required>
+            </div>
+            <div class="fitem" id="bumen">
+                <label>审核角色:</label>
+                <select id="rolename" name="rolename" class="easyui-combobox" style="width:350px;height:30px" data-options="editable:false,panelHeight:'auto'" required>
+                    @foreach (var item in ViewBag.role)
+                    {
+                        <option value="@item">@item</option>
+                    }
+                </select>
+            </div>
+            <div class="fitem" id="bumen">
+                <label>审核用户:</label>
+                <select id="liuchengUsername" name="liuchengUsername" class="easyui-combobox" style="width:350px;height:30px" data-options="editable:false,panelHeight:'auto'" required>
+                    @*@foreach (var item in ViewBag.username)
+                        {
+                            <option value="@item">@item</option>
+                        }*@
+
+                    @foreach (var item in ViewBag.username)
+                    {
+                        <option value=@item.UserName>@item.Zhenshiname (@item.Role)</option>
+                    }
+
+                </select>
+            </div>
+            <div class="fitem">
+                <label>流程备注:</label>
+                <input id="beizhu" name="beizhu" class="easyui-textbox" data-options="multiline:true,icons:[]" style="width:350px;height:100px">
+            </div>
+        </form>
+    </div>
+    <div id="dlg-buttons" style="text-align:center;padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" onclick="savezibiao()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+
+</div>
+
+
+@section footer{
+
+    <script type="text/javascript">
+        var url;
+        $(function () {
+
+            $("#liuchengzibiao").datagrid({
+                singleSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Liuchengshezhi/Getzibiao',
+                toolbar: '#toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                //nowrap: false,
+                fit: true,
+                autoRowheight: false,
+                queryParams: {
+                    zhubiaoid:'@zhubiaoid'
+                }
+            });
+
+            //设置分页控件
+
+            var p = $('#liuchengzibiao').datagrid('getPager');
+
+            $(p).pagination({
+
+                pageSize: 10,//每页显示的记录条数，默认为10
+
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+
+                beforePageText: '第',//页数文本框前显示的汉字
+
+                afterPageText: '页    共 {pages} 页',
+
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+
+            $('#buzhouming').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#beizhu').textbox().textbox('addClearBtn', 'icon-clear');
+
+        });
+
+
+        $.extend($.fn.combobox.methods, {
+            selectedIndex: function (jq, index) {
+                if (!index)
+                    index = 0;
+                var data = $(jq).combobox('options').data;
+                var vf = $(jq).combobox('options').valueField;
+                $(jq).combobox('setValue', eval('data[index].' + vf));
+            }
+        });
+
+
+        //文本框有输入之后文本框末尾有删除符号出现
+        $.extend($.fn.textbox.methods, {
+            addClearBtn: function (jq, iconCls) {
+                return jq.each(function () {
+                    var t = $(this);
+                    var opts = t.textbox('options');
+                    opts.icons = opts.icons || [];
+                    opts.icons.unshift({
+                        iconCls: iconCls,
+                        handler: function (e) {
+                            $(e.data.target).textbox('clear').textbox('textbox').focus();
+                            $(this).css('visibility', 'hidden');
+                        }
+                    });
+                    t.textbox();
+                    if (!t.textbox('getText')) {
+                        t.textbox('getIcon', 0).css('visibility', 'hidden');
+                    }
+                    t.textbox('textbox').bind('keyup', function () {
+                        var icon = t.textbox('getIcon', 0);
+                        if ($(this).val()) {
+                            icon.css('visibility', 'visible');
+                        } else {
+                            icon.css('visibility', 'hidden');
+                        }
+                    });
+                });
+            }
+        });
+
+        function newzibiao() {
+            $('#dlg').dialog('open').dialog('setTitle', '新增子流程');
+            $('#fm').form('clear');
+            url = '/Liuchengshezhi/Savezibiao?zhubiaoid='+@zhubiaoid;
+        };
+
+        function editzibiao() {
+            var row = $('#liuchengzibiao').datagrid('getSelected');
+            if (row) {
+                //var bmname = row.bmname;
+                var id = row.id;
+                $('#dlg').dialog('open').dialog('setTitle', '编辑子流程');
+                $('#fm').form('load', row);
+                //$('#mingcheng').textbox({
+                //    value: row.mingcheng,
+                //    disabled: true
+                //});
+                //url = '/Liuchengshezhi/Updateliucheng?bmname=' + bmname + '';
+
+                url = '/Liuchengshezhi/Updatezibiao?id=' + id;
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要编辑的行！", "warning");
+            }
+        };
+
+        function savezibiao() {
+            $('#fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                    $('#dlg').dialog('close');		// close the dialog
+                    $('#liuchengzibiao').datagrid('reload');	// reload the user data
+                    if (result.success) {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    }
+                    else {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        })
+                    }
+                },
+            })
+        };
+
+        function destroyzibiao() {
+            var row = $('#liuchengzibiao').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('提示', '您确定要删除这条记录吗？', function (r) {
+                    if (r) {
+                        $.post('/Liuchengshezhi/Delzibiao', { id: row.id }, function (result) {
+                            if (result.success) {
+
+                                $('#liuchengzibiao').datagrid('reload');	// reload the user data
+
+                            } else {
+                                result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+
+                                $.messager.show({	// show error message
+                                    title: 'Error',
+                                    msg: result.Msg
+                                });
+                            }
+                        }, 'json');
+                    };
+                });
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要删除的行！", "warning");
+            }
+        };
+    </script>
+
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin-bottom: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}

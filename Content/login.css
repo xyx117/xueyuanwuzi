@@ -1,0 +1,68 @@
+* {
+	font-family: "Verdana", "Tahoma", "Lucida Grande", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+}
+/*.mymidden {
+	background-image: url(../loginbg_01.jpg); height:600px;	width:auto;
+}
+.mytop{
+	
+	height:50px;
+	width:auto;
+	
+}*/ 
+
+a:link {
+	color: rgb(40, 94, 142);
+}
+.main_box {
+	background: rgba(255, 255, 255, 0.5); padding: 60px; border-radius: 5px; border: 1px solid rgb(221, 221, 221); border-image: none;  top: 18%;left:30%; width: 40%; height: auto; position:relative; box-shadow: 1px 5px 8px #888888; -webkit-box-shadow: 1px 5px 8px #888888; -moz-box-shadow: 1px 5px 8px #888888;
+}
+.main_box .setting {
+	top: 5px; width: 10px; height: 10px; right: 10px; position:absolute;
+}
+.main_box .setting a {
+	color: rgb(255, 102, 0);
+}
+.main_box .setting a:hover {
+	color: rgb(85, 85, 85);
+}
+.login_logo {
+	height: 45px; text-align: center; margin-bottom: 20px;
+}
+.login_logo img {
+	height: 45px;
+}
+.login_msg {
+	font-size: 16px; color:rgb(255, 0, 0);
+}
+
+.login_form {
+	padding-top: 20px; font-size: 16px;
+}
+.login_box .form-control {
+	width: 90%; font-size: 18px; display: inline-block; -ms-zoom: 1;padding:0px 12px;
+}
+/*.login_box .x319.form-control {
+	width: 319px;
+}
+.login_box .x164.form-control {
+	width: 164px;
+}*/
+.login_box .form-group {
+	margin-bottom: 20px;
+}
+/*.login_box .form-group label.t {
+	width: 120px; text-align: right; cursor: pointer;
+}
+.login_box .space.form-group {
+	padding-top: 15px; border-top-color: rgb(255, 255, 255); border-top-width: 1px; border-top-style: dotted;
+}
+.login_box .form-group img {
+	height: 32px; margin-top: 1px; vertical-align: top;
+}
+.login_box .m {
+	cursor: pointer;
+}
+.bottom {
+	text-align: center; font-size: 12px;
+}*/

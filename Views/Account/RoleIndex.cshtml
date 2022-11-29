@@ -1,0 +1,268 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "RoleIndex";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string userid = User.Identity.GetUserId();//取到登录人员的id
+}
+<div id="p" class="easyui-panel" data-options="fit:true, border:false " style="padding:5px;">
+    <table id="role_dg" class="easyui-datagrid" title="位置：基本设置>>角色管理" style="height:auto;">
+        <thead>
+            <tr>
+                <th data-options="field:'RoleID',align:'center'" hidden>用户名</th>
+                <th data-options="field:'RoleName',align:'center',width:'100%'">用户名</th>
+            </tr>
+        </thead>
+    </table>
+
+    <div id="role_toolbar">
+        <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="newrole()">新 增</a>
+        <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="editrole()">编 辑</a>
+        <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="destroyrole()">删 除</a>
+    </div>
+
+    <div id="role_dlg" class="easyui-dialog" style="width:540px;height:200px;padding:10px 20px" data-options="closed:'true',buttons:'#role_buttons'">
+        <div class="ftitle">角色设置</div>
+        <form id="role_fm" method="post" style="padding-left:10px" novalidate>
+            <div class="fitem">
+                <label>角色:</label>
+                <input name="RoleName" id="RoleName" class="easyui-textbox" data-options="icons:[]" style="width:320px;height:30px" required>@*,validType:'checkRole'*@
+            </div>
+        </form>
+    </div>
+
+    <div id="role_buttons" style="text-align:center;padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" onclick="saverole()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#role_dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+
+</div>
+
+@section footer{       
+    <script type="text/javascript">
+        var url;
+        $(function () {
+            $("#role_dg").datagrid({
+                singleSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Account/GetRole',
+                toolbar: '#role_toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                nowrap: true,
+                fit: true,
+                autoRowHeight: false,
+                //queryParams: {
+                //    userid: userid
+                //}
+            });
+
+            //设置分页控件
+
+            var p = $('#role_dg').datagrid('getPager');
+
+            $(p).pagination({
+
+                pageSize: 10,//每页显示的记录条数，默认为10
+
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+
+                beforePageText: '第',//页数文本框前显示的汉字
+
+                afterPageText: '页    共 {pages} 页',
+
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+            //$('#name').textbox().textbox('addClearBtn', 'icon-clear'); 
+        });
+
+        //文本框有输入之后文本框末尾有删除符号出现
+        $.extend($.fn.textbox.methods, {
+            addClearBtn: function (jq, iconCls) {
+                return jq.each(function () {
+                    var t = $(this);
+                    var opts = t.textbox('options');
+                    opts.icons = opts.icons || [];
+                    opts.icons.unshift({
+                        iconCls: iconCls,
+                        handler: function (e) {
+                            $(e.data.target).textbox('clear').textbox('textbox').focus();
+                            $(this).css('visibility', 'hidden');
+                        }
+                    });
+                    t.textbox();
+                    if (!t.textbox('getText')) {
+                        t.textbox('getIcon', 0).css('visibility', 'hidden');
+                    }
+                    t.textbox('textbox').bind('keyup', function () {
+                        var icon = t.textbox('getIcon', 0);
+                        if ($(this).val()) {
+                            icon.css('visibility', 'visible');
+                        } else {
+                            icon.css('visibility', 'hidden');
+                        }
+                    });
+                });
+            }
+        });
+
+        $.extend($.fn.validatebox.defaults.rules, {
+            //检查名字是否雷同
+            checkRole: {
+                validator: function (value, param) {
+                    var name = value.trim();
+
+                    var result = "";
+                    $.ajax({
+                        type: 'post',
+                        async: false,
+                        url: '/Account/CheckRole',
+                        data: {
+                            "name": name
+                        },
+                        success: function (data) {
+                            result = data;
+                        }
+                    });
+                    return result.indexOf("True") == 0;
+                },
+                message: '该名字已经被占用'
+            }        
+            
+        });
+
+        function newrole() {
+            $('#role_dlg').dialog('open').dialog('setTitle', '新增角色');
+
+            $('#RoleName').textbox('enable', 'true');            
+
+            $('#role_fm').form('clear');
+
+            url = '/Account/Addrole';
+        };
+
+        //用户编辑
+        function editrole() {
+
+            var row = $('#role_dg').datagrid('getSelected');
+
+            if (row) {
+
+                var id = row.RoleID;
+
+                //alert(id);
+
+                $('#role_dlg').dialog('open').dialog('setTitle', '编辑角色');
+
+                $('#role_fm').form('load', row);
+
+                //$('#RoleName').textbox('disable', 'true');                
+                //$('#imf').hide();
+
+                url = '/Account/EditRole?id=' + id + '';
+            }
+            else {
+
+                $.messager.alert("错误提示", "请选择要编辑的行！", "warning");
+            }
+        };
+
+
+        function saverole() {          
+            $('#role_fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    //var result = eval('(' + result + ')');
+                    result = JSON.parse(result);
+
+                    $('#role_dlg').dialog('close');		// close the dialog
+                    $('#role_dg').datagrid('reload');	// reload the user data
+                    if (result.success == true) {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    } else {
+                        $.messager.show({
+                            title: '错误提示',
+                            msg: result.Msg
+                        });
+                    }
+                }
+            });
+        };
+
+        function destroyrole() {
+            var row = $('#role_dg').datagrid('getSelected');            
+            if (row) {
+                $.messager.confirm('提示', '您确定要删除该员工吗？', function (r) {
+                    if (r) {                     
+                        $.post('/Account/DelRole', { id: row.RoleID, rolename: row.RoleName }, function (result) {
+                            if (result.success) {
+                                $('#role_dg').datagrid('reload');	// reload the user data
+                                $.messager.show({
+                                    title: '提示',
+                                    msg: result.errorMsg
+                                });
+                            } else {
+                                $.messager.show({
+                                    title: '错误提示',
+                                    msg: result.errorMsg
+                                });
+                            }
+                        }, 'json');
+                    }
+                });
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要删除的行！", "warning");
+            }
+        };
+
+        //当字数太长，限定只显示前面一部分
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '<a href="#" title="' + value + '" class="easyui-tooltip"></a>';
+                return ss
+            }
+            else {
+                if (value1.length > 10) {
+                    value1 = value1.substr(0, 10) + "...";
+                }
+                var ss = '<a href="#" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+    </script>
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .fitem {
+            margin: 10px;
+        }
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+

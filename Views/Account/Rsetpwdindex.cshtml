@@ -1,0 +1,141 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+    string username = User.Identity.GetUserName();
+}
+
+<div id="p" class="easyui-panel" data-options="fit:true, border:true " style="padding:5px;">
+   
+    <div class="easyui-layout">
+        @*title="位置：基本设置>>密码修改" data-options="fit:true"*@
+
+        <form id="setpaw_fm" method="post" >
+            <div class="fitem">
+                @*<label style="font:bold;font-size:18px">修改密码</label>*@
+                <h3>(建议您定期更改密码以确保账户安全)</h3>
+            </div>
+            <hr />
+            <div class="fitem" style="margin:20px">
+                <label>请输新密码:</label>
+                <input id="userpassword" name="password" type="password" data-options="icons:[]" style="height:35px; width: 410px" class="easyui-validatebox textbox" required>
+            </div>
+
+            <div class="fitem" style="margin:20px">
+                <label>确认新密码:</label>   @*padding-left: 5px;*@
+                <input id="confirmPassword" name="confirmPassword" type="password" style=" height: 35px; width: 410px; " class="easyui-validatebox textbox" data-options="icons:[],validType:'equalTo[\'#userpassword\']'" required>
+            </div>
+
+            <hr />
+            <div id="bmrestpaw_buttons" style="padding: 5px; margin: 10px">
+                <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" id="sumit" onclick="restpwd()" style="width:95px;height:30px">确定</a>
+                @*<a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#setpaw_dlg').dialog('close')" style="width: 95px; height: 30px">取消</a>*@
+            </div>
+        </form>
+    </div>    
+</div>
+
+@section footer{
+
+    <script type="text/javascript">
+        var url, loingid = '@loingid';
+        $(function () {
+            $('#userpassword').textbox().textbox('addClearBtn', 'icon-clear');
+
+            $('#confirmPassword').textbox().textbox('addClearBtn', 'icon-clear');
+            //验证两次密码输入是否相同
+            $.extend($.fn.validatebox.defaults.rules, {
+                /*必须和某个字段相等*/
+                equalTo: {
+                    validator: function (value, param) {
+                        return $(param[0]).val() == value;
+                    },
+                    message: '两次输入密码不一致！'
+                }
+            });
+        });
+
+        //文本框有输入之后文本框末尾有删除符号出现
+        $.extend($.fn.textbox.methods, {
+            addClearBtn: function (jq, iconCls) {
+                return jq.each(function () {
+                    var t = $(this);
+                    var opts = t.textbox('options');
+                    opts.icons = opts.icons || [];
+                    opts.icons.unshift({
+                        iconCls: iconCls,
+                        handler: function (e) {
+                            $(e.data.target).textbox('clear').textbox('textbox').focus();
+                            $(this).css('visibility', 'hidden');
+                        }
+                    });
+                    t.textbox();
+                    if (!t.textbox('getText')) {
+                        t.textbox('getIcon', 0).css('visibility', 'hidden');
+                    }
+                    t.textbox('textbox').bind('keyup', function () {
+                        var icon = t.textbox('getIcon', 0);
+                        if ($(this).val()) {
+                            icon.css('visibility', 'visible');
+                        } else {
+                            icon.css('visibility', 'hidden');
+                        }
+                    });
+                });
+            }
+        });
+
+        function restpwd() {
+            $('#setpaw_fm').form('submit', {
+
+                url: '/Account/setpwd?userid=' + loingid,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    //var result = eval('(' + result + ')');
+                    result = JSON.parse(result);
+                    if (result.success == true) {
+                        //result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                        $.messager.show({
+                            title: '提示！',
+                            msg: result.Msg
+                        });
+                        $('#setpaw_fm').form('clear');
+                    } if (result.success == false) {
+                        $.messager.show({
+                            title: '错误提示！',
+                            msg: result.Msg
+                        });
+                        $('#setpaw_dlg').dialog('close');		// close the dialog
+
+                    }
+                }
+            });            
+        };
+    </script>
+
+    <style type="text/css">
+        #setpaw_fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .fitem {
+            margin-bottom: 5px;
+        }
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+

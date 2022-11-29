@@ -1,0 +1,99 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Bumenzhuguan";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    //string mulu = ViewBag.mulu;
+    string loingid = User.Identity.GetUserId();   //取到登录人员的id
+    var sf = DateTime.Now.ToString();
+}
+<div id="p" class="easyui-panel" style="padding:2px;" data-options="fit:true, border:false ">
+
+    <div class="easyui-tabs" id="easytab" data-options="fit:true, border:true ">
+
+        <div title="待审项目" align="center" data-options="closable:false,url:'/Xiangmuguanli/Daishen_Zg?time=@sf'" style="padding: 5px;">
+
+        </div>
+
+        <div title="撤回项目" data-options="url:'/Xiangmuguanli/Tuihui_Zg?time=@sf'" style="padding:5px;">
+
+        </div>
+
+        <div title="未通过项目" data-options="closable:false,url:'/Xiangmuguanli/Weitongguo_Zg?time=@sf'" style="padding: 5px;">
+
+        </div>
+
+        <div title="已审项目" data-options="url:'/Xiangmuguanli/Yishen_Zg?time=@sf'" style="padding:5px;">
+
+        </div>
+
+
+
+
+
+        <div title="待审的发票" data-options="closable:false,url:'/Xiangmuguanli/Fapiao_Bmld?time=@sf'" style="padding: 5px;">
+
+        </div>
+        <div title="在审的发票" data-options="closable:false,url:'/Xiangmuguanli/Fapiao_Yishen_Bmld?time=@sf'" style="padding: 5px;">
+
+        </div>
+
+        <div title="撤回的发票" data-options="closable:false,url:'/Xiangmuguanli/Fapiao_Chehui_zg?time=@sf'" style="padding: 5px;">
+
+        </div>
+        @*Fapiao_Tongyi_zg*@
+        <div title="同意报销的发票" data-options="closable:false,url:'/Xiangmuguanli/Fapiao_Tongguo_Yg?time=@sf'" style="padding: 5px;">
+
+        </div>
+
+
+
+        @*<div title="签收项目" data-options="closable:false,url:'/Xiangmuguanli/Qianshou_Yg?time=@sf&loingid=@loingid'" style="padding: 5px;">
+
+        </div>*@
+
+        @*<div title="已签收物资" data-options="closable:false,url:'/Xiangmuguanli/Yiqianshou_Yg?time=@sf&loingid=@loingid'" style="padding: 5px;">
+
+        </div>
+
+        <div title="待签收物资" data-options="closable:false,url:'/Xiangmuguanli/Daiqianshou_Yg?time=@sf&loingid=@loingid'" style="padding: 5px;">
+
+        </div>*@
+    </div>
+</div>
+
+@section footer{
+    <script type="text/javascript">
+        $(function () {
+            $("#easytab").tabs({
+                tabPosition: 'top',
+                fit: true,
+                onSelect: function (title, index) {
+                    open(index);
+                }
+            });
+            function open(index) {
+                var tab = $("#easytab").tabs("getTab", index);
+                //console.log(tab);
+                //console.log(tab[0]);
+
+                //不重复打开 ,之前这里是保留的，但是在评委审核通过后，我们需要刷新“已审核”tab标签，所以这里我们允许重复打开
+                //if (tab.attr("opend")) {
+                //    return;
+                //}
+
+                var url = tab.panel("options").url;  //这里的URL是tab中的url
+
+                //console.log(op);
+
+                if (url) {
+                    //$(tab[0]).html('<iframe frameborder="0" scrolling="auto" width="100%" height="100%" src="${path}' + url + '"></iframe>');  // /xiangmuguanli/${path}xiangmuguanli/wsxx_jbxx
+
+                    $(tab[0]).html('<iframe frameborder="0" scrolling="auto" width="100%" height="100%" src=" ' + url + ' "></iframe>');
+
+                    tab.attr("opend", true);
+                }
+            }
+            open(0);
+        });
+    </script>
+}

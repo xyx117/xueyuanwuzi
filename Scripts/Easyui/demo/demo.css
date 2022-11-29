@@ -1,0 +1,26 @@
+body {
+    font-family:verdana,helvetica,arial,sans-serif;
+    padding:0px;
+    font-size:12px;
+    margin:0;
+}
+h2 {
+    font-size:18px;
+    font-weight:bold;
+    margin:0;
+    margin-bottom:15px;
+}
+.demo-info{
+	padding:0 0 12px 0;
+}
+.demo-tip{
+	display:none;
+}
+
+
+/*在给操作增加  link-button 是，行高出现变形，增加下面样式，由25改为32*/
+/*.datagrid-row {
+ 
+  height: 32px;
+}*/
+

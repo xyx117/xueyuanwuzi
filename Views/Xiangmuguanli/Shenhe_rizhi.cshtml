@@ -1,0 +1,99 @@
+﻿
+@{
+    ViewBag.Title = "Shenhe_rizhi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var xmname = ViewBag.xmname;
+    var xmid = ViewBag.xmid;
+
+    var step = ViewBag.step;   
+}
+
+<br><br>
+
+<div style="padding:40px 5px 0px 5px">
+    <div class="ystep_shenhe"></div>
+</div>
+
+<div style="padding:0px 5px 5px 5px">
+    <table id="dg_yg" class="easyui-datagrid" style="width:98%;height:auto;" title=@xmname data-options="singleSelect:true,collapsible:true,url:'/Xiangmuguanli/Get_xmrizhi?xmid=@xmid',method:'post',rownumbers:true,pagination:true,autoRowheight:false">
+        <thead>
+            <tr>
+                <th data-options="field:'shenhejiedian',align:'center',width:'15%'">申报节点</th>
+                <th data-options="field:'shenheren',align:'center',width:'10%'">经手人</th>
+                <th data-options="field:'shenhejuese',align:'center',width:'10%'">经手角色</th>
+                <th data-options="field:'shenhezhuangtai',align:'center',width:'24%',formatter: TitleFormatter">处理结果</th>
+                <th data-options="field:'shenheyijian',align:'center',width:'24%',formatter: TitleFormatter">处理意见</th>
+                <th data-options="field:'shenheriqi',align:'center',width:'15%',formatter:formatDatebox">处理时间</th>                
+            </tr>
+        </thead>
+    </table>
+</div>
+
+@section footer{
+    <script type="text/javascript" src="~/ystep/js/ystep.js"></script>
+    <link rel="stylesheet" type="text/css" href="~/ystep/css/ystep.css">
+
+    <script>
+        var step = '@step';
+        //根据jQuery选择器找到需要加载ystep的容器
+        //loadStep 方法可以初始化ystep
+        $(function () {
+            //分管领导人参与审核显示流程
+            $(".ystep_shenhe").loadStep({
+                //ystep的外观大小
+                //可选值：small,large
+                size: "large",
+                //ystep配色方案
+                //可选值：green,blue
+                color: "green",
+                //ystep中包含的步骤
+                steps: [{
+                    title: "开始",
+                }, {
+                    //步骤名称
+                    title: "录入",
+                    //步骤内容(鼠标移动到本步骤节点时，会提示该内容)
+                    content: "创建者"
+                }, {
+                    title: "提交",
+                    content: "创建者"
+                }, {
+                    title: "审核中",
+                    content: ""
+                }, {
+                    title: "审定",
+                    content: ""
+                }, {
+                    title: "结算",
+                    content: ""
+                }, {
+                    title: "收货",
+                    content: ""
+                    }, {
+                        title: "结束",
+                        content: ""
+                    }
+                ]
+            });
+            $(".ystep_shenhe").setStep(step);
+            
+        });
+
+        //当项目名称字数太长，限定只显示前面一部分
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '<a href="#" title="' + value + '"  class="easyui-tooltip"></a>';
+                return ss
+            }
+            else {
+                if (value1.length > 16) {
+                    value1 = value1.substr(0, 16) + "...";
+                }
+                var ss = '<a href="#" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+    </script>
+
+}

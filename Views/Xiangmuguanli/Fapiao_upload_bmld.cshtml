@@ -1,0 +1,56 @@
+﻿@using Microsoft.AspNet.Identity
+@model IEnumerable<wzgl.Models.Fapiao_upload>
+@{
+    ViewBag.Title = "Fapiao_upload_bmld";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    //Layout = "";
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+    var fapiaohao = ViewBag.fapiao;
+}
+
+@*纯手工打造漂亮的瀑布流，五大插件一个都不少Bootstrap+jQuery+Masonry+imagesLoaded+Lightbox*@
+
+
+<div class="container-fluid">
+    <div class="row-fluid">       
+        <div class="span9">
+            <h3>
+                发票号：@fapiaohao 
+            </h3>
+        </div>       
+    </div>
+</div>
+
+
+<div id="images">
+    @foreach (var item in Model)
+    {
+
+        <div id="masonry" class="container-fluid">
+            <div class="thumbnail">
+                <div class="imgs">
+                    <img src="~/@item.Filepath@item.Filename" />
+                </div>
+                <div class="caption">
+                    <div class="title">发票名称：@item.Filename</div>
+                    <div class="content">
+                        备注：@item.Beizhu
+                    </div>
+                    <div class="author">
+                        上传部门及人员：@item.Suoshubumen @item.Username<br />
+                        上传时间：@item.Uploadtime
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr />
+    }
+</div>
+
+@section footer{
+    <script src="~/Scripts/bootstrap-waterfall/js/bootstrap-waterfall.js"></script>
+    <script src="~/Scripts/bootstrap-waterfall/imagesloaded.pkgd.js"></script>
+    <script src="~/Scripts/bootstrap-waterfall/masonry.pkgd.js"></script>
+    <script src="~/Scripts/bootstrap-waterfall/lightbox.js"></script>
+}

@@ -1,0 +1,413 @@
+﻿@model IEnumerable<wzgl.Models.ApplicationUser>
+@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Daigou_Zg";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+
+}
+
+<table id="xiangmu" class="easyui-datagrid" style="height:auto;width:100%;">
+    <thead>
+        <tr>
+            <th data-options="field:'ck',checkbox:true,width:'3%'"></th>
+
+            <th data-options="field:'id',align:'center',width:'5%'" hidden>id</th>
+
+            <th data-options="field:'xiangmumingcheng',align:'center',width:'26%',formatter:TitleFormatter">项目名称&nbsp;<i style="color:red">(点击链接查看内容)</i></th>
+
+            <th data-options="field:'jine',align:'center',width:'10%'">金额(元)</th>
+
+            <th data-options="field:'shenqingren',align:'center',width:'7%'">申请人</th>
+
+            <th data-options="field:'shenheliucheng',align:'center',width:'15%',formatter:liucheng_tooltip">审核流程</th>
+
+            <th data-options="field:'shenhezhuangtai',align:'center',width:'4%',formatter:shenhe_zhuangtai">状态</th>
+
+            <th data-options="field:'shenherizhi',align:'center',width:'4%',formatter:liucheng_rizhi">日志</th>
+
+            <th data-options="field:'riqi',align:'center',width:'10%',formatter:formatDatebox">申请日期</th>
+
+            <th data-options="field:'file',align:'center',width:'5%',formatter:file_action">附件</th>
+
+            <th data-options="field:'beizhu',align:'center',width:'17%',formatter: beizhu_style">备注</th>
+        </tr>
+    </thead>
+</table>
+
+<div id="toolbar" style="height: 32px; padding: 2px 5px; background:#ddd;">
+    <div style="float:left;">
+        <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="jiesuan()">采 购</a>
+    </div>
+    <div style="float:left;margin-top:5px;margin-left:30px;" id="xiaoji">
+    </div>
+    <div style="float: right">
+        <input class="easyui-searchbox" data-options="prompt:'请输入项目名称进行查询',searcher:doSearch" style="width:300px">
+    </div>
+</div>
+
+
+@*结算对话框*@
+<div id="jiesuan_dlg" class="easyui-dialog" style="width:45%;height:300px;padding:10px 20px" data-options="closed:'true',buttons:'#jiesuan_btn'">
+    <center>
+        <form id="jiesuan_fm" method="post" novalidate>
+
+            <p style="font-size:15px;"><strong id="tishi">@*您确定要结算这些记录吗？ 合计：*@</strong></p>
+
+            <div class="fitem" id="bumen">
+                <label>采购人:</label>
+                <select id="caigouren" name="caigouren" class="easyui-combobox" style="width:350px;height:30px" data-options="editable:false,panelHeight:'auto'">
+                    @foreach (var item in Model)
+                    {
+                        <option value=@item.Id>@item.Zhenshiname (@item.Role)</option>
+                    }
+                </select>
+            </div>
+            @*<div class="fitem">
+                <label>报销领导:</label>
+                <input id="baoxiao_shenhe" name="baoxiao_shenhe" style="width:350px;height:30px" class="easyui-combobox" data-options="editable:false,panelHeight:'auto',
+                                valueField: 'label',
+                                textField: 'value',
+                                data: [{label:'吴丽华',value: '吴丽华'},{label: '卢',value: '卢'}]" required>
+            </div>*@
+
+            <div class="fitem" id="bumen">
+                <label>审核流程:</label>
+                <select id="shenheliucheng" name="shenheliucheng" class="easyui-combobox" style="width:350px;height:30px" data-options="editable:false,panelHeight:'auto'" required>
+                    @foreach (var item in ViewBag.liucheng)
+                    {
+                        <option value="@item">@item</option>
+                    }
+                </select>
+            </div>
+
+            <div class="fitem">
+                <label>备注:</label>
+                <input id="beizhu" name="beizhu" class="easyui-textbox" data-options="multiline:true,icons:[]" style="width:350px;height:60px">
+            </div>
+        </form>
+    </center>
+</div>
+<div id="jiesuan_btn" style="text-align:center;padding:5px">
+    <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" id="save_btn" onclick="jiesuan_save()" style="width:90px">确定</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#jiesuan_dlg').dialog('close')" style="width:90px">取消</a>
+</div>
+
+
+@section footer{
+    <script type="text/javascript">
+        var url,loingid='@loingid',username='@username';
+        $(function () {
+            $("#xiangmu").datagrid({
+                singleSelect: false,
+                selectOnCheck: true,
+                checkOnSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Xiangmuguanli/Get_Daigou_Zg',
+                toolbar: '#toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                //nowrap: false,
+                //fit: true,
+                autoRowheight: false,
+                queryParams: {
+                    searchquery: '',
+                    loingid: loingid
+                },
+                onLoadSuccess: function (data) {
+                    //提交  plain:当True时显示一个普通效果
+                    $('.tijiao').linkbutton({ plain: true });
+                    $('.tijiao').addClass("c6");
+                    $('.tijiao_jin').linkbutton({ disabled: true });
+                    $('.tijiao_jin').addClass("c6");
+                },
+                onCheck: xiaoji,
+                onUncheck: xiaoji,
+                onCheckAll: xiaoji_all,
+                onUncheckAll:xiaoji_all
+
+            });
+            var p = $('#xiangmu').datagrid('getPager');
+
+            $(p).pagination({
+                pageSize: 10,//每页显示的记录条数，默认为10
+
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+
+                beforePageText: '第',//页数文本框前显示的汉字
+
+                afterPageText: '页    共 {pages} 页',
+
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+        });
+
+
+        //当字数太长，限定只显示前面一部分 ，点击项目名，跳转到项目子表页面
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 15) {
+                    value1 = value1.substr(0, 15) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" onclick="xmzibiao(' + index + ')" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function beizhu_style(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 5) {
+                    value1 = value1.substr(0, 5) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" onclick="xmzibiao(' + index + ')" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+
+        function doSearch(value) {
+            $('#xiangmu').datagrid('load', { "searchquery": value, "loingid": loingid });
+        };
+
+        //限定项目名称在tabtitle中的长度
+        function changdu(xm_name) {
+            value1 = xm_name;
+            if (value1.length > 15) {
+                value1 = value1.substr(0, 15) + "...";
+            }
+            return value1;
+        };
+
+        //转到项目子表页面
+        function xmzibiao(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var name = row.xiangmumingcheng;
+                var id = row.id;
+                var tabTitle = "添加子资产：" + changdu(name);
+                var url = "/Xiangmuguanli/Xiangmuzibiao?xmid=" + id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+
+
+        function xiaoji(value, row, index) {
+            var checkedItems = $('#xiangmu').datagrid('getChecked');
+            var heji = 0;
+            if (checkedItems) {
+                $.each(checkedItems, function (index, item) {
+                    heji = heji + item.jine;
+                });
+            }
+            $('#xiaoji').html("采购金额合计： " + heji + " (元)");
+        };
+
+
+        function xiaoji_all(rows) {
+            var checkedItems = $('#xiangmu').datagrid('getChecked');
+            var heji=0;
+            if (checkedItems) {
+                $.each(checkedItems, function (index, item) {
+                    heji = heji + item.jine;
+                });
+                $('#xiaoji').html("采购金额合计： " + heji + " (元)");
+            } else {
+                $('#xiaoji').html("采购金额合计： " + 0.00 + " (元)");
+            }
+        };
+
+        var names;
+
+        function jiesuan() {
+            var checkedItems = $('#xiangmu').datagrid('getChecked');
+            var ids = [];
+            var heji = 0;
+            var xmnames =[];
+            if (checkedItems.length == 0) {
+                $.messager.alert("错误提示", "请选择要结算的项目！", "warning");
+            }
+            else {
+                if (checkedItems) {
+                    $('#jiesuan_dlg').dialog('open').dialog('setTitle', '项目结算');
+                    $('#jiesuan_fm').form('clear');
+                    $.each(checkedItems, function (index, item) {
+                        ids.push(item.id);
+                        heji = heji + item.jine;
+                        xmnames.push(item.xiangmumingcheng);
+                    });
+                    $('#tishi').html("您确定要结算这些采购项目吗？结算金额合计： " + heji + " (元)");
+                    url = '/Xiangmuguanli/Jiesuan?loingid=' + loingid + '&xmnames='+xmnames+'&heji='+heji+'&xmid=' + ids;
+                }
+            }
+        };
+
+
+        function jiesuan_save() {
+            $('#save_btn').linkbutton({ disabled: true });   //这里是为解决一个连击问题
+            $('#jiesuan_fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+
+                    if (result.success == false) {
+                        $.messager.show({
+                            title: '错误提示',
+                            msg: result.Msg
+                        });
+                    } else {
+                        $('#jiesuan_dlg').dialog('close');		// close the dialog
+                        $('#xiangmu').datagrid('reload');	// reload the user data
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                        $('#tishi').html("");
+                    }                    
+                }
+            });
+            //alert("c");
+            //setTimeout(2000);
+            
+            $('#save_btn').linkbutton({ disabled: false });   //这里是为解决一个连击问题     这里有个问题，已经执行到这里了，但是对话框还没有来得及关闭
+            $('#xiaoji').html("采购金额合计： " + 0 + " (元)");    //这里测试 采购 结束后 归零
+        };
+
+        //鼠标滑过流程时显示流程参与人  ，这里的 onmouseover 参数如果换成  string 类型的值 在 tooltip（）中取不到值
+        function liucheng_tooltip(value, row, index) {
+            var liuchengID = row.liuchengID;
+            if (value.length > 0) {
+                return ss = '<a id="yg' + index + '" href="javascript:;" onmouseover="tooltip(' + liuchengID + ',' + index + ')">' + value + '</a>';
+            }
+            else {
+                return value;
+            };
+        };
+
+        function tooltip(liuchengID, index) {
+            $.post('/Xiangmuguanli/Liucheng_tooltip', { liuchengID: liuchengID }, function (result) {
+                if (result.success) {
+                    var ygh = "#yg" + index;
+                    $(ygh).tooltip({ content: result.Msg });
+                }
+            }, 'json');
+        };
+
+        //审核状态
+        function shenhe_zhuangtai(value, row, index) {
+            var shenhe = row.shenhezhuangtai;
+            //var xulie = row.shenhexulie; 
+            var goumaizhuangtai = row.goumaizhuangtai;
+            var dingdanshouhuo = row.dingdanshouhuo;
+            switch (shenhe) {
+                case "通过":
+                    if (dingdanshouhuo == "已收货") {
+                        return "<Image src='/Scripts/easyui/themes/icons/basket.png' Title='已收货' />";
+                    } else {
+                        if (goumaizhuangtai == "已购买") {
+                            return "<Image src='/Scripts/easyui/themes/icons/cart_put.png' Title='已购买' />";
+                        } else {
+                            return "<Image src='/Scripts/easyui/themes/icons/ok.png' Title='通过' />";
+                        }
+                    }
+                    break;
+                case "未通过": return "<Image src='/Scripts/easyui/themes/icons/no.png' Title='未通过' />";
+                    break;
+                case "审核中": return "<Image src='/Scripts/easyui/themes/icons/zoom.png' Title='审核中' />";
+                    break;
+                case "已提交": return "<Image src='/Scripts/easyui/themes/icons/tijiao.png' Title='审核中' />";
+                    break;
+                case "未提交": return "<Image src='/Scripts/easyui/themes/icons/question.png' Title='未提交' />";
+                    break;
+            }
+        };
+
+        //审核日志
+        function liucheng_rizhi(value, row, index) {
+            return "<Image src='/Scripts/easyui/themes/icons/book.png' Title='审核中' onclick='rizhi(" + index + ")'/>";
+        };
+
+
+
+        function rizhi(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var name = row.xiangmumingcheng;
+                var id = row.id;
+                var tabTitle = "审核日志：" + changdu(name);
+                var url = "/Xiangmuguanli/Shenhe_rizhi?xmname=" + name + "&xmid=" + id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+
+
+        //跳转到附件上传页面
+        function file_action(value, row, index) {
+            return "<a href='javascript:void(0)' style='width:80%' class='tijiao' onclick='file(" + index + ")' target='mainFrame'>附件</a>";
+        };
+
+        function file(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var name = row.xiangmumingcheng;
+                var id = row.id;
+                var tabTitle = "项目附件：" + changdu(name);
+                var url = "/Xiangmuguanli/File_upload?xmid=" + id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+    </script>
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin-bottom: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+
+
+

@@ -1,0 +1,513 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Shenqing_Yg";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+    int xmid = ViewBag.xmid;
+    var shenhezhuangtai = ViewBag.shenhezhuangtai;
+}
+
+<table id="xiangmu" class="easyui-datagrid" style="height:auto;width:100%">
+    <thead>
+        <tr>
+            <th data-options="field:'id',align:'center'" hidden>id</th>
+
+            <th data-options="field:'xiangmumingcheng',align:'center',width:'25%',formatter:TitleFormatter">设备名称</th>
+
+            <th data-options="field:'guige',align:'center',width:'10%',formatter:guige_style">规格</th>
+
+            <th data-options="field:'xinghao',align:'center',width:'10%',formatter:guige_style">型号</th>
+
+            <th data-options="field:'shuliang',align:'center',width:'4%'">数量</th>
+
+            <th data-options="field:'danjia',align:'center',width:'6%'">参考<br>单价(元)</th>
+
+            <th data-options="field:'jine',align:'center',width:'6%'">金额<br>(元)</th>
+
+            <th data-options="field:'shenqingren',align:'center',width:'5%'">领用人</th>
+
+            <th data-options="field:'weixiuhuoxinzeng',align:'center',width:'5%'">维修<br>或新增</th>
+
+            <th data-options="field:'lingyongdanwei',align:'center',width:'8%',formatter: beizhu_style">领用<br>单位</th>
+
+            <th data-options="field:'shouhuofou',align:'center',width:'4%',formatter:shouhuo_action">收货<br>状态</th>
+
+            <th data-options="field:'riqi',align:'center',width:'8%',formatter:formatDatebox">申请日期</th>
+
+            <th data-options="field:'beizhu',align:'center',width:'10%',formatter: beizhu_style">备注</th>
+
+        </tr>
+    </thead>
+</table>
+
+@*审核状态    未提交，已提交，未审核，审核中，通过，未通过*@
+@if (shenhezhuangtai == "未提交" || shenhezhuangtai == "已提交" || shenhezhuangtai == "撤回")
+{
+    <div id="toolbar" style="height: 32px; padding: 2px 5px; background:#ddd;">
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="newxiangmu()">新 增</a>
+        </div>
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="excel()">excel导入</a>
+        </div>
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="editxiangmu()">编 辑</a>
+        </div>
+        <div style="float: left;">
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="delxiangmu()">删 除</a>
+        </div>
+    </div>
+}
+
+<div id="dlg" class="easyui-dialog" style="width:850px;height:520px;padding:10px 20px" data-options="closed:'true',buttons:'#dlg_btn'">
+    <form id="fm" method="post" novalidate>
+        <div class="fitem" hidden>
+            <label>id:</label>
+            <input id="id" name="id" class="easyui-textbox">
+        </div>
+        <div class="fitem">
+            <label>设备名称:</label>
+            <input id="xiangmumingcheng" name="xiangmumingcheng" class="easyui-textbox" data-options="icons:[]" style="width:550px;height:30px" required>
+        </div>
+        <div class="fitem">
+            <label>厂家:</label>
+            <input id="changjia" name="changjia" class="easyui-textbox" data-options="icons:[]" style="width:550px;height:30px">
+        </div>
+        <div class="fitem">
+            <label>规格:</label>
+            <input id="guige" name="guige" class="easyui-textbox" data-options="icons:[]" style="width:550px;height:30px">
+        </div>
+        <div class="fitem">
+            <label>型号:</label>
+            <input id="xinghao" name="xinghao" class="easyui-textbox" data-options="icons:[]" style="width:550px;height:30px">
+        </div>
+        <div class="fitem">
+            <label>数量:</label>
+            <input id="shuliang" name="shuliang" class="easyui-textbox" data-options="validType:'positive_int',icons:[]" style="width:550px;height:30px" required>
+        </div>
+
+        <div class="fitem">
+            <label>参考单价(元):</label>
+            <input id="danjia" name="danjia" class="easyui-textbox" data-options="validType:'numeric',icons:[]" style="width:550px;height:30px" required>
+            <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" id="save_btn" onclick="jiagebidui()" style="width:70px">价格比对</a>
+        </div>
+        <div class="fitem" id="juese">
+            <label>维修或新增:</label>
+            <input id="weixiuhuoxinzeng" name="weixiuhuoxinzeng" style="width:550px;height:30px" class="easyui-combobox" data-options="editable:false,panelHeight:'auto',
+                                valueField: 'label',
+                                textField: 'value',
+                                data: [{label:'维修',value: '维修'},{label: '新增',value: '新增'}]" required>
+        </div>
+        <div class="fitem" id="juese">
+            <label>经费科目:</label>
+            <input id="jingfeikemu" name="jingfeikemu" style="width:550px;height:30px" class="easyui-combobox" data-options="editable:false,panelHeight:'auto',
+                                valueField: 'label',
+                                textField: 'value',
+                                data: [{label:'科研',value: '科研'},{label: '教学',value: '教学'},{label: '其他',value: '其他'}]" required>
+        </div>
+        <div class="fitem">
+            <label>放置地点:</label>  @*这里只是单纯的改用名称，实际上赋值的对象还是 领用单位。领用单位是相对于国资处来说的。*@
+            <input id="lingyongdanwei" name="lingyongdanwei" class="easyui-textbox" data-options="prompt:'例如：3142 现代教育技术实训中心',validType:'stringCheckSub',icons:[]" style="width:550px;height:30px" required>
+        </div>
+        <div class="fitem">
+            <label>备注:</label>
+            <input id="beizhu" name="beizhu" class="easyui-textbox" data-options="multiline:true,icons:[]" style="width:550px;height:30px">
+        </div>
+    </form>
+</div>
+<div id="dlg_btn" style="text-align:center;padding:5px">
+    <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" id="save_btn" onclick="savexiangmu()" style="width:90px">保存</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript:$('#dlg').dialog('close')" style="width:90px">取消</a>
+</div>
+
+@*京东同类商品价格比对 对话框*@
+<div id="dlg_py" class="easyui-dialog" style="width:1200px;height:520px;padding:10px 20px" data-options="closed:'true',buttons:'#dlg_btn_py'">
+    <table id="py_dg" class="easyui-datagrid" style="width:100%;height:100%">
+        <thead>
+            <tr>
+                @*<th data-options="field:'xuhao',width:'5%',align:'center'">序号</th>
+                    <th data-options="field:'shangjia',width:'25%',align:'center'">商家</th>
+                    <th data-options="field:'jiage',width:'10%',align:'center',sortable:true">价格（元）</th>
+                    <th data-options="field:'shangpin',width:'60%',align:'center'">商品信息</th>*@
+
+                @*{index:8,shoudian:777,jiage:888,mingcheng:999}*@
+                <th data-options="field:'index',width:'5%',align:'center'">序号</th>
+                <th data-options="field:'shoudian',width:'25%',align:'center'">商家</th>
+                <th data-options="field:'jiage',width:'10%',align:'center'">价格（元）</th>
+                <th data-options="field:'mingcheng',width:'60%',align:'center'">商品信息</th>
+            </tr>
+
+        </thead>
+    </table>
+</div>
+<div id="dlg_btn_py" style="text-align:center;padding:5px">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript:$('#dlg_py').dialog('close')" style="width:90px">关闭</a>
+</div>
+
+
+<div id="excel_dlg" class="easyui-dialog" style="width:450px;height:250px;padding:5px 5px 5px 30px" data-options="closed:'true',buttons:'#cgpz_exl_btn'">
+    <form id="excel_fm" method="post" novalidate enctype="multipart/form-data">
+        @*enctype="multipart/form-data"  这个属性不能缺少，否则找不到文件*@
+        <div class="fitem">
+            <p style="color: Red; text-align: center;">
+                @Html.ActionLink("请使用模版上传，点击下载", "GetexcelFile", new { mobanname = "zibiao" })
+            </p>
+        </div>
+        <div class="fitem">
+            <label>选择文件：</label>
+            <input id="files" name="files" class="easyui-filebox" style="width:60%;height:30px">
+        </div>
+        <div class="fitem">
+            <label>更新模式：</label>
+            <select id="gengxinmoshi" name="gengxinmoshi" class="easyui-combobox" style="width:150px;height:30px">
+                <option value="zhuijia" selected>追加</option>
+                <option value="fugai">覆盖</option>
+            </select>
+        </div>
+    </form>
+</div>
+<div id="cgpz_exl_btn" style="text-align:center;padding:5px">
+    <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" id="save_btn_exl" onclick="excel_save()" style="width:90px;">导入</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript:$('#excel_dlg').dialog('close')" style="width:90px;">取消</a>
+</div>
+
+
+@section footer{
+    <script type="text/javascript">
+        var url,loingid='@loingid',xmid='@xmid';
+        $(function () {
+            $("#xiangmu").datagrid({
+                singleSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Xiangmuguanli/Get_xmzibiao',
+                toolbar: '#toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                //nowrap: false,
+                fit: true,
+                autoRowheight: false,
+                queryParams: {
+                    searchquery: '',
+                    xmid:xmid,
+                }
+            });
+
+            var p = $('#xiangmu').datagrid('getPager');
+
+            $(p).pagination({
+                pageSize: 10,//每页显示的记录条数，默认为10
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+                beforePageText: '第',//页数文本框前显示的汉字
+                afterPageText: '页    共 {pages} 页',
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+
+            $('#xiangmumingcheng').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#guige').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#shuliang').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#danjia').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#beizhu').textbox().textbox('addClearBtn', 'icon-clear');
+        });
+
+        //文本框有输入之后文本框末尾有删除符号出现
+        $.extend($.fn.textbox.methods, {
+            addClearBtn: function (jq, iconCls) {
+                return jq.each(function () {
+                    var t = $(this);
+                    var opts = t.textbox('options');
+                    opts.icons = opts.icons || [];
+                    opts.icons.unshift({
+                        iconCls: iconCls,
+                        handler: function (e) {
+                            $(e.data.target).textbox('clear').textbox('textbox').focus();
+                            $(this).css('visibility', 'hidden');
+                        }
+                    });
+                    t.textbox();
+                    if (!t.textbox('getText')) {
+                        t.textbox('getIcon', 0).css('visibility', 'hidden');
+                    }
+                    t.textbox('textbox').bind('keyup', function () {
+                        var icon = t.textbox('getIcon', 0);
+                        if ($(this).val()) {
+                            icon.css('visibility', 'visible');
+                        } else {
+                            icon.css('visibility', 'hidden');
+                        }
+                    });
+                });
+            }
+        });
+
+        //对textbox进行验证
+        $.extend($.fn.textbox.defaults.rules, {
+            positive_int: {
+                validator: function (value, param) {
+                    if (value) {
+                        return /^[0-9]*[1-9][0-9]*$/.test(value);
+                    } else {
+                        return true;
+                    }
+                },
+                message: '只能输入正整数.'
+            },
+            numeric: {
+                validator: function (value, param) {
+                    if (value) {
+                        return /^[0-9]*(\.[0-9]+)?$/.test(value);
+                    } else {
+                        return true;
+                    }
+                },
+                message: '只能输入数值.'
+            },
+            stringCheckSub: {
+                validator: function (value) {
+                    return /^[\w\u4E00-\u9FA5（）《》【】\-(){}\[\]]+$/.test(value);
+                },
+                message: "只能包括中文、英文字母、数字及（）《》[]【】(){}-等符号。"
+            }
+        });
+
+        //限制项目名显示字数
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 15) {
+                    value1 = value1.substr(0, 15) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        //限规格显示字数
+        function guige_style(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 10) {
+                    value1 = value1.substr(0, 10) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        //限制备注显示字数
+        function beizhu_style(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 5) {
+                    value1 = value1.substr(0, 5) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        function shouhuo_action(value, row, index) {
+            var shouhuo = row.shouhuofou;
+            switch (shouhuo) {
+                case "已收货": return "<Image src='/Scripts/easyui/themes/icons/ok.png' Title='已收货'/>";
+                    break;
+                case "未收货": return "<Image src='/Scripts/easyui/themes/icons/question.png' Title='未收货'/>";
+                    break;
+            }
+        };
+
+        function newxiangmu() {
+            $('#dlg').dialog('open').dialog('setTitle', '新增申请设备');
+            $('#fm').form('clear');
+            url = '/Xiangmuguanli/Save_xmzibiao?username=@username&xmid=@xmid';
+        };
+
+        function editxiangmu() {
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var id = row.id;
+                $('#dlg').dialog('open').dialog('setTitle', '编辑申请设备');
+                $('#fm').form('load', row);
+                url = '/Xiangmuguanli/Update_xmzibiao?username=@username&xmid=@xmid&id='+id;
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要编辑的行！", "warning");
+            }
+        };
+
+        function savexiangmu() {
+            $('#save_btn').linkbutton({ disabled: true });   //这里是为解决一个连击问题
+            $('#fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                    $('#dlg').dialog('close');		// close the dialog
+                    $('#xiangmu').datagrid('reload');	// reload the user data
+                    if (result.success == false) {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    }
+                    else {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        })
+                    }
+                },
+            });
+            $('#save_btn').linkbutton({ disabled: false });   //释放连击被禁用的按钮
+        };
+
+        function delxiangmu() {
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('提示', '您确定要删除这条记录吗？', function (r) {
+                    if (r) {
+                        $.post('/Xiangmuguanli/Del_xmzibiao', { id: row.id,xmid:@xmid }, function (result) {
+                            if (result.success) {
+                                $('#xiangmu').datagrid('reload');	// reload the user data
+                            } else {
+                                result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+
+                                $.messager.show({	// show error message
+                                    title: 'Error',
+                                    msg: result.errorMsg
+                                });
+                            }
+                        }, 'json');
+                    };
+                });
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要删除的行！", "warning");
+            }
+        };
+
+        function excel() {
+            $('#excel_dlg').dialog('open').dialog('setTitle', '子清单电子表格导入');
+            $('#files').filebox('clear');
+            $('#files').filebox({
+                buttonText: '选择文件',
+                buttonAlign: 'right'
+            })
+            url = '/Xiangmuguanli/Excel_zibiao?xmid=@xmid&username=@username' ;
+        };
+
+        function excel_save() {
+            $('#save_btn_exl').linkbutton({ disabled: true });   //这里是为解决一个连击问题
+
+            $('#excel_fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式
+                    $('#excel_dlg').dialog('close');		// close the dialog
+                    $('#xiangmu').datagrid('reload');	// reload the user data
+                    if (result.success == true) {
+                        $.messager.show({	// show error message
+                            title: '提示',
+                            msg: result.errorMsg
+                        });
+                        $('#excel_dlg').dialog('close');		// close the dialog
+                        $('#xiangmu').datagrid('reload');	// reload the user data
+                    } else {
+                        $.messager.show({
+                            title: '错误提示',
+                            msg: result.errorMsg
+                        });
+                    };
+                }
+            });
+            $('#save_btn_exl').linkbutton({ disabled: false });   //这里是为解决一个连击问题
+        };
+
+        //调用python比对价格
+        function jiagebidui() {
+            $('#dlg_py').dialog('open').dialog('setTitle', '商城同类商品价格比对');
+
+            var xm = $("#xiangmumingcheng").textbox('getValue');
+            var guige = $("#guige").textbox('getValue');
+            var xinghao = $("#xinghao").textbox('getValue');
+
+            var py_str = xm +' '+ guige + xinghao;
+            alert(py_str);
+            //动态加载标题和数据
+            $.ajax({
+                url: "/Python/Py_Jingdong",
+                type: "post",
+                dataType: "json",
+                data: { py_str:py_str },
+                success: function (str) {
+                    if (str.data == "" || str.data == null) {   //.succeed == "false"
+                        //alert("1")
+                        //alert(str.data)
+                        $.messager.show({
+                            title: '提示',
+                            msg: "爬取不到数据！再试一下"
+                        })
+                    }
+                    else {
+                        //alert("2");
+                        //alert(str.data)
+                        //alert(JSON.stringify(str.data));
+                        $('#py_dg').datagrid('loadData', str.data);   //{ index: "8", shoudian: "777", jiage: "888", mingcheng: "999" }
+
+                    }
+                }
+            });
+            $("#py_dg").datagrid("loadData", { total: 0, rows: [] });
+        };
+    </script>
+
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin-bottom: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 100px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+

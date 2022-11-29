@@ -1,0 +1,135 @@
+﻿@using Microsoft.AspNet.Identity
+@*@model IEnumerable<wzgl.Models.Fapiao_upload>*@
+@{
+    ViewBag.Title = "Fapiao_zg";
+    var biaoxiao = ViewBag.biaoxiao;
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+}
+@if (biaoxiao == "同意报销")
+{
+    <div id="content" class="row-fluid" style="width:100%;">
+
+        @foreach (var item in Model)
+        {
+            <div class="col-sm-6 col-md-2" style="height:50%;width:50%;padding:5px;">
+                <div class="thumbnail">
+                    <img src="~/@item.Filepath@item.Filename"
+                         alt="通用的占位符缩略图">
+                    <div class="caption">
+                        <h5>发票名称：@item.Filename</h5>
+                        @*style="word-wrap: break-word;word-break: break-all;"  备注文字自动换行     *@
+                        <p>备注：@item.Beizhu</p>
+
+                        <div class="btn-group btn-group-justified">
+                            
+
+                            @*参数Beizhu要加上引号，因为这里是string类型，否则中文会无法识别活，文字会乱码*@
+                            <a href="#" class="btn btn-default" role="button" onclick="edt(@item.ID,'@item.Beizhu')"> 编辑</a>
+                            <a href="#" class="btn btn-primary" role="button" onclick="show('@item.Filepath','@item.Filename')">查看</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div id="content" class="row-fluid" style="width:100%;">
+        @foreach (var item in Model)
+        {
+            <div class="col-sm-6 col-md-2" style="height:50%;width:50%;padding:5px;">
+                <div class="thumbnail">
+                    <img src="~/@item.Filepath@item.Filename"
+                         alt="通用的占位符缩略图">
+                    <div class="caption">
+                        <h5>发票名称：@item.Filename</h5>
+                        @*style="word-wrap: break-word;word-break: break-all;"  备注文字自动换行     *@
+                        <p>备注：@item.Beizhu</p>
+
+                        <div class="btn-group btn-group-justified">
+                            <a href="#" class="btn btn-primary" role="button" onclick="del(@item.ID)">删除</a>
+
+                            @*参数Beizhu要加上引号，因为这里是string类型，否则中文会无法识别活，文字会乱码*@
+                            <a href="#" class="btn btn-default" role="button" onclick="edt(@item.ID,'@item.Beizhu')"> 编辑</a>
+                            <a href="#" class="btn btn-primary" role="button" onclick="show('@item.Filepath','@item.Filename')">查看</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">提示</h4>
+            </div>
+            <div class="modal-body">
+                <h4>您确定要删除这张图片吗？</h4>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>取消</button>
+                <button type="button" id="btn_submit" class="btn btn-primary" data-dismiss="modal"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form action="saveSupplier" method="POST">
+    <div class="modal fade" id="myModal_edt" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel_edt">编辑</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="txt_statu">备注</label>
+                        <input type="text" name="beizhu" class="form-control" id="beizhu" placeholder="备注信息">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>关闭</button>
+                    <button type="button" id="btn_submit_edt" class="btn btn-primary" data-dismiss="modal"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="modal fade" id="myModal_show" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document" style="width:800px;height:auto">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                @*<h4 class="modal-title" id="myModalLabel_edt">查看</h4>*@
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                </div>
+                <image id="pic" style="width:100%;"></image>
+            </div>
+            @*<div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span>关闭</button>
+                </div>*@
+        </div>
+    </div>
+</div>
+<style>
+    /*自动换行*/
+    p {
+        word-wrap: break-word;
+        word-break: break-all;
+    }
+    /*按钮文字大小*/
+    a:link {
+        font-size: medium;
+    }
+</style>

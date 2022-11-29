@@ -1,0 +1,175 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Home Page";
+
+    //Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string loingid = User.Identity.GetUserId();//取到登录人员的id
+}
+
+<div class="easyui-layout" data-options="fit:true">
+    @*style="padding:5px"*@
+
+    <div data-options="region:'north',split:true,border:true" style="overflow: hidden; height: 80px;">
+        <div class="top-bg">
+            <div style="float: left;width:70%;">
+                <a>
+                    <img src="~/Content/image/logon1.jpg" style="padding-top:5px;">
+                </a>
+            </div>
+            <div style="float: right; padding-top: 15px; width: 30%;">
+                @Html.Partial("_LoginPartial")
+            </div>
+        </div>
+    </div>
+
+    <div data-options="region:'west',iconCls:'icon-menu',split:true" title="主菜单" style="width: 158px;border:0px;background-color:#2c3b41;color:#2c3b41">
+        @*style="width: 189px;"*@
+        @*<div id="LeftMenu" style="width:179px;height:auto">
+        </div>*@
+        <div id="LeftMenu" style="width:150px;height:auto">
+        </div>
+    </div>
+    <div id="mainPanle" data-options="region:'center'" style="overflow: hidden;">
+        <div id="main-tab" class="easyui-tabs" data-options="fit:true, border:false">
+            <div title="首页" data-options="closable:false,iconCls:'icon-house'" style="padding: 5px;">
+                <iframe name="mainFrame" id="mainFrame" scrolling="auto" style="width:100%;height:99%;" src="@Url.Action("BarChart_admin",new { loingid = loingid})" frameborder="0" marginheight="0" marginwidth="0"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section footer{
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/demo/sidemenu/sidemenu_style.css">
+    <script type="text/javascript">
+        //这里开始的时候使用get()方法通过 viewbag 获取sidemenu 的数据，但是需要携带loingid，有隐患，后改为post()方法
+        @*var json = @Html.Raw(ViewBag.json);
+        var json2 = @Html.Raw(ViewBag.json2);
+        var json3 = @Html.Raw(ViewBag.json3);*@
+        var zongerchanged = 0;
+        $(function () {
+            var json1, json2, json3,json4;
+            $.ajax({
+                type: 'post',
+                async: false,
+                url: '/Home/Index_json',
+                data: {
+                    "f": '@loingid'
+                },
+                success: function (data) {
+                    json1 = JSON.parse(data.a);
+                    json2 = JSON.parse(data.b);
+                    json3 = JSON.parse(data.c);
+                    json4 = JSON.parse(data.d);
+                }
+            });
+            $('#LeftMenu').sidemenu({
+                data: [json1, json2, json3,json4],
+                onSelect: onSideMenuSelect,
+                border: false
+            });
+            
+            $("#main-tab").tabs({
+                onSelect: function (title, index) {
+                    if (title == "首页" && zongerchanged == 1) {
+                        zongerchanged = 0;
+                        var iframe = $(".tabs-panels .panel").eq(index).find("iframe");
+                        if (iframe) {
+                            var url = iframe.attr("src");
+                            iframe.attr("src", url);
+                        }
+                    }
+                }
+            });
+        });
+
+        function onSideMenuSelect(item) {
+            //alert(item.url);  这里有值提示
+            if (!$('#main-tab').tabs('exists', item.text)) {
+                $('#main-tab').tabs('add', {
+                    title: item.text,
+                    content: '<iframe scrolling="auto" frameborder="0"  src="' + item.url + '" style="width:100%;height:99%;"></iframe>',
+                    closable: true,
+                    icon: item.iconCls,
+                    id: item.id
+                });
+            } else {
+                $('#main-tab').tabs('select', item.text);
+            }
+            addTabMenu();
+        }
+
+        function addTabMenu() {
+            /* 双击关闭TAB选项卡 */
+            $(".tabs-inner").dblclick(function () {
+                var subtitle = $(this).children(".tabs-closable").text();
+                $('#main-tab').tabs('close', subtitle);
+            });
+            /* 为选项卡绑定右键 */
+            //$(".tabs-inner").bind('contextmenu', function (e) {
+            //    $('#tab_menu').menu('show', {
+            //        left: e.pageX,
+            //        top: e.pageY
+            //    });
+
+            //    var subtitle = $(this).children(".tabs-closable").text();
+
+            //    $('#tab_menu').data("currtab", subtitle);
+            //    $('#main-tab').tabs('select', subtitle);
+            //    return false;
+            //});
+        }
+
+        function addTab(title, url, icon) {
+            var $mainTabs = $("#main-tab");
+            if ($mainTabs.tabs("exists", title)) {
+                $mainTabs.tabs("select", title);
+            } else {
+                $mainTabs.tabs("add", {
+                    title: title,
+                    //height: 90,
+                    //width:90,
+                    closable: true,
+                    icon: icon,
+                    content: createFrame(url)
+                });
+            }
+        };
+
+        function createFrame(url) {
+            var html = '<iframe scrolling="auto" frameborder="0" src="'+url+'" style="width:99%;height:98%;margin:3px"></iframe>';
+            return html;
+        };
+
+        function transToTreeData(data) {
+            return $.Enumerable.From(data).Select(function (m) {
+                var obj = {};
+                obj.id = m.Id;
+                obj.text = m.Text;
+                obj.iconCls = m.IconCls;
+                obj.checked = m.Checked;
+                if (m.Url) {
+                    obj.attributes = { url: m.Url };
+                }
+                if (m.Children && m.Children.length > 0) {
+                    obj.children = transToTreeData(m.Children);
+                }
+                return obj;
+            }).ToArray();
+        };
+
+        //在点击列表后，我的页面中datagrid出现变形
+        function xm(url) {
+            $("#main-tab").tabs("select", "首页");
+            $("#mainFrame").attr("src", url);
+        };
+
+        function showniandulist(url) {
+            $("#main-tab").tabs("select", "首页");
+            $("#mainFrame").attr("src", url);
+        };
+
+    </script>
+}
+
+

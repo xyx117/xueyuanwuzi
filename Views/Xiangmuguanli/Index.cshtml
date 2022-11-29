@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Index</title>
+    <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/themes/color.css">
+    <link rel="stylesheet" type="text/css" href="~/Scripts/Easyui-1.8.1/demo/demo.css">
+    <link href="~/Content/css/bootstrap-responsive.css" rel="stylesheet">         @*响应式设置引用*@
+
+    <script type="text/javascript" src="~/Scripts/Easyui-1.8.1/jquery.min.js"></script>
+    <script type="text/javascript" src="~/Scripts/Easyui-1.8.1/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="~/Scripts/Easyui-1.8.1/locale/easyui-lang-zh_CN.js"></script>
+
+    <script type="text/javascript" src="~/Scripts/Easyui-1.8.1/easyuiExtension.js"></script>
+    <style type="text/css">
+        .define-head {
+            font-family: Verdana,Geneva,sans-serif;
+            background-color: #EFEFEF;
+            height: 55px;
+            overflow: hidden;
+        }
+
+            .define-head .define-logo {
+                height: 52px;
+                width: 50%;
+                float: left;
+            }
+
+                .define-head .define-logo #LoginTopLine {
+                    letter-spacing: 2px;
+                    margin: 8px 0px 0px 10px;
+                    text-shadow: 3px 1px 6px #fff;
+                    color: #15428B;
+                    font-size: 26px;
+                    height: 30px;
+                    line-height: 30px;
+                    padding-left: 55px;
+                }
+
+                .define-head .define-logo #LoginBotoomLine {
+                    letter-spacing: 1px;
+                    text-shadow: 3px 1px 6px #fff;
+                    color: #15428B;
+                    font-size: 12px;
+                    height: 15px;
+                    line-height: 15px;
+                    padding-left: 65px;
+                }
+    </style>
+</head>
+
+<body>
+
+    <div class="easyui-layout" data-options="fit:true">
+        
+        <div data-options="region:'west',iconCls:'icon-menu',split:true" title="主菜单" style="width: 189px;">
+            <div id="LeftMenu" style="width:179px;">
+            </div>            
+        </div>        
+    </div>    
+</body>
+</html>
+
+<script type="text/javascript">
+    $(function () {
+        //result = JSON.parse(result); 
+        var json1, json2,json3;
+            $.ajax({
+                type: 'post',
+                async: false,
+                url: '/Xiangmuguanli/Index_json',
+                data: {
+                    "f": 's'
+                },
+                success: function (data) {
+                    json1 = JSON.parse(data.a);
+                    json2 = JSON.parse(data.b);
+                    json3 = JSON.parse(data.c);
+                    //data_jsn = JSON.parse(data.c)
+                }
+            });
+        
+        $('#LeftMenu').sidemenu({            
+            data: [json1,json2,json3],    
+            onSelect: onSideMenuSelect,
+            border: false
+        });
+    });
+    function onPanelOpen() {
+        var panel = $(this);
+        var _1e = panel.panel("header").children("div.panel-tool");
+        _1e.children("a.panel-tool-collapse").hide();
+
+        var _20 = "layout-button-left";// + _1f[dir];
+        var t = _1e.children("a." + _20);
+        if (!t.length) {
+            t = $("<a href=\"javascript:;\"></a>").addClass(_20).appendTo(_1e);
+            t.bind("click", { dir: "left" }, function (e) {
+                if (e.target.className == "layout-button-right") {
+                    e.target.className = "layout-button-left"
+                    onWestExpand();
+                    panel.panel("setTitle", panel.titleTemp);
+                    panel.panel('resize', {
+                        width: 202
+                    });
+
+                    var leftMenuDiv = $('#LeftMenuDiv');
+                    leftMenuDiv.each(function () {
+                        this.style.width = '202px';
+                    });
+                }
+                else {
+                    e.target.className = "layout-button-right"
+                    onWestCollapse();
+                    var opt = panel.panel('options');
+                    panel.titleTemp = opt.title;
+                    panel.panel("setTitle", "");
+                    panel.panel('resize', {
+                        width: 42
+                    });
+
+                    var leftMenuDiv = $('#LeftMenuDiv');
+                    leftMenuDiv.each(function () {
+                        this.style.width = '42px';
+                    });
+                }
+
+                return false;
+            });
+        }
+        //$(this).panel("options").collapsible ? t.show() : t.hide();
+    }
+
+    function onTabSelect(title, index) {
+        var tabs = $('#mainTab');
+        var tab = tabs.tabs('getTab', index);
+        var menus = $('#LeftMenu');
+        if (menus.hasClass('sidemenu')) {
+            var opts = menus.sidemenu("options");
+            changeMenuSelect(menus, opts, tab[0].id);
+        }
+    }
+
+    function onWestCollapse() {
+        var opts = $('#LeftMenu').sidemenu('options');
+        if (opts.collapsed != 'collapse') {
+            $('#LeftMenu').sidemenu('collapse');
+            $('#LeftMenu').sidemenu('resize', {
+                width: 40
+            });
+        }
+    }
+
+    function onWestExpand() {
+        var opts = $('#LeftMenu').sidemenu('options');
+        if (opts.collapsed != 'expand') {
+            $('#LeftMenu').sidemenu('expand');
+            $('#LeftMenu').sidemenu('resize', {
+                width: 200
+            });
+        }
+    }
+
+    function onSideMenuSelect(item) {
+        
+        if (!$('#mainTab').tabs('exists', item.text)) {
+            $('#mainTab').tabs('add', {
+                title: item.text,
+                content: '<iframe scrolling="auto" frameborder="0"  src="' + item.url + '" style="width:100%;height:99%;"></iframe>',
+                closable: true,
+                icon: item.iconCls,
+                id: item.id
+            });
+        } else {
+            $('#mainTab').tabs('select', item.text);
+        }
+        addTabMenu();
+    }
+
+    function addTabMenu() {
+        /* 双击关闭TAB选项卡 */
+        $(".tabs-inner").dblclick(function () {
+            var subtitle = $(this).children(".tabs-closable").text();
+            $('#mainTab').tabs('close', subtitle);
+        });
+        /* 为选项卡绑定右键 */
+        $(".tabs-inner").bind('contextmenu', function (e) {
+            $('#tab_menu').menu('show', {
+                left: e.pageX,
+                top: e.pageY
+            });
+
+            var subtitle = $(this).children(".tabs-closable").text();
+
+            $('#tab_menu').data("currtab", subtitle);
+            $('#mainTab').tabs('select', subtitle);
+            return false;
+        });
+    }
+
+    function changeMenuSelect(menus, opts, selectId) {
+        var menutrees = menus.find(".sidemenu-tree");
+        menutrees.each(function () {
+            var menuItem = $(this);
+            changeMenuStyle(menuItem, opts, selectId);
+        });
+
+        var tooltips = menus.find(".tooltip-f");
+        tooltips.each(function () {
+            var menuItem = $(this);
+            var tip = menuItem.tooltip("tip");
+            if (tip) {
+                tip.find(".sidemenu-tree").each(function () {
+                    changeMenuStyle($(this), opts, selectId);
+                });
+                menuItem.tooltip("reposition");
+            }
+        });
+    }
+
+    function changeMenuStyle(menuItem, opts, selectId) {
+        menuItem.find("div.tree-node-selected").removeClass("tree-node-selected");
+        var node = menuItem.tree("find", selectId);
+        if (node) {
+            $(node.target).addClass("tree-node-selected");
+            opts.selectedItemId = node.id;
+            menuItem.trigger("mouseleave.sidemenu");
+        }
+
+        changeMenuSelect(menuItem);
+    }
+</script>

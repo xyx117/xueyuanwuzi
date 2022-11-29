@@ -1,0 +1,359 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "Fapiao_Bmld";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string username = User.Identity.GetUserName();//取到登录人员的name
+    string loingid = User.Identity.GetUserId();//取到登录人员的id   
+}
+
+<table id="xiangmu" class="easyui-datagrid" style="height:auto;width:100%;">
+    <thead>
+        <tr>
+            <th data-options="field:'id',align:'center',width:'1%'" hidden rowspan="2">id</th>
+
+            <th data-options="field:'dingdanming',align:'center',width:'31%',formatter:TitleFormatter" rowspan="2">发票名称&nbsp;<i style="color:red">(点击链接查看内容)</i></th>
+
+            <th data-options="field:'dingdanjine',align:'center',width:'6%'" rowspan="2">金额(元)</th>
+
+            <th data-options="field:'dingdanren',align:'center',width:'6%'" rowspan="2">指派人</th>
+
+            <th data-options="field:'caigouren',align:'center',width:'6%'" rowspan="2">采购人</th>
+
+            <th data-options="field:'shenheliucheng',align:'center',width:'14%',formatter:liucheng_tooltip" rowspan="2">审核流程</th>
+
+            <th colspan="2">操作</th>
+            <th colspan="2">发票状态</th>            
+
+            <th data-options="field:'dingdanriqi',align:'center',width:'8%',formatter:formatDatebox" rowspan="2">申请日期</th>
+            <th data-options="field:'beizhu',align:'center',width:'12%',formatter: substr_action" rowspan="2">备注</th>
+        </tr>
+        <tr>
+            <th data-options="field:'action1_1',align:'center',width:'5%',formatter: action_fapiao">发票</th>
+            <th data-options="field:'action2',align:'center',width:'5%',formatter: action_baoxiao">报销</th>
+
+            <th data-options="field:'baoxiaozhuangtai',align:'center',width:'4%',formatter:baoxiao_action">日志</th>
+            <th data-options="field:'shenherizhi',align:'center',width:'4%',formatter:liucheng_rizhi" >详情</th>
+        </tr>
+    </thead>
+</table>
+
+<div id="toolbar" style="height: 32px; padding: 2px 5px; background:#ddd;">    
+    <div style="float: right">
+        <input class="easyui-searchbox" data-options="prompt:'请输入项目名称进行查询',searcher:doSearch" style="width:300px">
+    </div>
+</div>
+
+@*审核弹出对话框  *@
+<div id="shenhe_dlg" class="easyui-dialog" style="width:470px;height:auto;padding:10px 20px" data-options="closed:'true',buttons:'#shenhe_bmfzr_dlg'">
+    <center>
+        <form id="fm_shenhe" method="post" novalidate>
+            <table cellpadding="5">
+                <tr>
+                    <td><strong>报销结果:</strong></td>
+                    <td>
+                        <input type="radio" name="shenhe" value="同意报销" required><span>同意报销</span>
+                        <input type="radio" name="shenhe" value="撤回" required><span>撤回</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>报销意见：</strong></td>
+                    <td>
+                        <input id="yijian" name="yijian" class="easyui-textbox" data-options="multiline:true" style="width:300px;height:70px">
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </center>
+</div>
+<div style="text-align:center;padding:5px" id="shenhe_bmfzr_dlg">
+    <a href="javascript:void(0)" id="save_btn" class="easyui-linkbutton" data-options="iconCls:'icon-ok',plain:true" onclick="shenhe_save()">确定</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#shenhe_dlg').dialog('close')" style="width:80px">取消</a>
+</div>
+
+@section footer{
+    <script type="text/javascript" src="~/Scripts/datagrid-groupview.js"></script>
+    <script type="text/javascript">
+        var url,loingid='@loingid',username='@username';
+        $(function () {
+            $("#xiangmu").datagrid({
+                singleSelect: true,
+                selectOnCheck: true,
+                checkOnSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Xiangmuguanli/Get_Fapiao_Bmld',
+                toolbar: '#toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                //nowrap: false,
+                fit: true,
+                autoRowheight: false,
+                view: groupview,
+                groupField: 'suoshubumen',
+                groupFormatter: function (value, rows) {
+                    return value + '- <span style="color:red"> ' + rows.length + '项' ;
+                },
+                queryParams: {
+                    searchquery: '',
+                    loingid: loingid,
+                    username:username
+                },
+                onLoadSuccess: function (data) {
+                    $('.fapiao').linkbutton({ plain: true });
+                    $('.fapiao').addClass("c6");
+
+                    $('.baoxiao').linkbutton({ plain: false });
+                    $('.baoxiao').addClass("c6");
+
+                    $('.baoxiao_jin').linkbutton({ disabled: true });
+                    $('.baoxiao_jin').addClass("c6");
+                }
+
+            });
+            var p = $('#xiangmu').datagrid('getPager');
+
+            $(p).pagination({
+                pageSize: 10,//每页显示的记录条数，默认为10
+
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+
+                beforePageText: '第',//页数文本框前显示的汉字
+
+                afterPageText: '页    共 {pages} 页',
+
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+        });
+
+        function doSearch(value) {
+            $('#xiangmu').datagrid('load', { "searchquery": value, "loingid": loingid });
+        };
+
+        function shouhuo_action(value, row, index) {
+            var shouhuo = row.dingdanshouhuo;
+            switch (shouhuo) {
+                case "已收货": return "<Image src='/Scripts/easyui/themes/icons/ok.png' Title='已收货'/>";
+                    break;
+                case "未收货": return "<Image src='/Scripts/easyui/themes/icons/question.png' Title='未收货'/>";
+                    break;
+            }
+        };
+
+        // 未报销 ， 申请报销 ，同意报销  ，不同意报销
+        function baoxiao_action(value, row, index) {
+            var baoxiao = row.baoxiaozhuangtai;
+            switch (baoxiao) {
+                case "同意报销": return "<Image src='/Scripts/easyui/themes/icons/ok.png' Title='已报销'/>";
+                    break;
+                case "未报销": return "<Image src='/Scripts/easyui/themes/icons/question.png' Title='未报销'/>";
+                    break;
+                case "不同意报销": return "<Image src='/Scripts/easyui/themes/icons/no.png' Title='不同意报销'/>";
+                    break;
+                case "申请报销": return "<Image src='/Scripts/easyui/themes/icons/search.png' Title='申请报销'/>";
+                    break;
+                case "审核中": return "<Image src='/Scripts/easyui/themes/icons/zoom.png' Title='审核中'/>";
+                    break;
+            }
+        };
+                
+        //当字数太长，限定只显示前面一部分
+        function substr_action(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 10) {
+                    value1 = value1.substr(0, 10) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+
+
+        //当字数太长，限定只显示前面一部分 ，点击项目名，跳转到项目子表页面
+        function TitleFormatter(value, row, index) {
+            var value1 = value;
+            if (value1 == null) {
+                var ss = '';
+                return ss
+            }
+            else {
+                if (value1.length > 25) {
+                    value1 = value1.substr(0, 25) + "...";
+                }
+                var ss = '<a href="javascript:;" title="' + value + '" onclick="xmbiao(' + index + ')" class="easyui-tooltip">' + value1 + '</a>';
+                return ss
+            }
+        };
+
+        //限定项目名称在tabtitle中的长度
+        function changdu(xm_name) {
+            value1 = xm_name;
+            if (value1.length > 15) {
+                value1 = value1.substr(0, 15) + "...";
+            }
+            return value1;
+        };
+
+        //转到项目子表页面
+        function xmbiao(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var name = row.dingdanming;
+                var id = row.id;
+                var tabTitle = "订单项目：" + changdu(name);
+                var url = "/Xiangmuguanli/Xiangmubiao?id=" + id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+
+        //value, row, index  点击按钮即是选中这行
+        //index  点击按钮 显示的是选中的行，而不是点击按钮的这一行
+        function action_fapiao(value, row, index) {
+            return "<a href='javascript:void(0)' style='width:80%' class='fapiao' onclick='fapiao(" + index + ")' target='mainFrame'>发票</a>";
+        };
+
+        function fapiao(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var mingcheng = row.dingdanming;
+                var id = row.id;
+                var tabTitle = changdu(mingcheng) + "&nbsp" + "发票";
+                var url = "/Xiangmuguanli/Fapiao_upload_bmld?id="+id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+
+
+        function action_baoxiao(value, row, index) {
+            if (row.baoxiaozhuangtai == "申请报销"||row.baoxiaozhuangtai=="审核中") {
+                return "<a href='javascript:void(0)' style='width:80%' class='baoxiao' onclick='baoxiao(" + index + ")' target='mainFrame'>审核</a>";
+            }
+            return "<a href='javascript:void(0)' style='width:80%' class='baoxiao_jin' target='mainFrame'>审核</a>";
+        };
+
+        //审核操作弹出对话框
+        function baoxiao(index) {
+            $('#fm_shenhe').form('clear');
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                $('#shenhe_dlg').dialog('open').dialog('setTitle', '报销审核');
+                var id = row.id;
+                //url = '/Xiangmuguanli/Baoxiao_Shenhe?loingid=' + loingid + '&xmid=' + id;   //部门领导作为最后一步审核
+                url = '/Xiangmuguanli/Fapiao_Shenhe?loingid=' + loingid + '&xmid=' + id;      //部门领导不作为最后一步审核
+            }
+        };
+
+        //审核操作弹出对话框后点击确认保存
+        function shenhe_save() {
+            $('#save_btn').linkbutton({ disabled: true });   //这里是为解决一个连击问题
+
+            $('#fm_shenhe').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    result = JSON.parse(result);   //IE浏览器在后台操作完成后返回提示信息，转化为json字符串格式,在删除的方法中，加了这个后不能自动reload  dategrid
+                    if (result.success) {
+                        $('#shenhe_dlg').dialog('close');		// close the dialog
+                        $('#xiangmu').datagrid('reload');	// reload the user data
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    } else {
+                        $.messager.show({
+                            title: '错误提示',
+                            msg: result.Msg
+                        });
+                    }                    
+                }
+            });
+            $('#save_btn').linkbutton({ disabled: false });   //这里是为解决一个连击问题
+        };
+
+        //审核日志
+        function liucheng_rizhi(value, row, index) {
+            return "<Image src='/Scripts/easyui/themes/icons/book.png' Title='审核日志' onclick='rizhi(" + index + ")'/>";
+        };
+
+        function rizhi(index) {
+            $('#xiangmu').datagrid('selectRow', index);
+            var row = $('#xiangmu').datagrid('getSelected');
+            if (row) {
+                var name = row.dingdanming;
+                var id = row.id;
+                var tabTitle = "审核日志：" + changdu(name);
+                var url = "/Xiangmuguanli/Shenhe_Fapiao_rizhi?xmname=" + name + "&xmid=" + id;
+                var icon = "icon-shenhe";
+                window.parent.parent.addTab(tabTitle, url, icon);//使用新加的tab打开窗口
+            }
+        };
+
+
+        //弹出审核 参与人
+        function liucheng_tooltip(value, row, index) {
+            var liuchengID = row.liuchengID;
+            if (value.length > 0) {
+                return ss = '<a id="yg' + index + '" href="javascript:;" onmouseover="tooltip(' + liuchengID + ',' + index + ')">' + value + '</a>';
+            }
+            else {
+                return value;
+            };
+        };
+        //弹出审核 参与人
+        function tooltip(liuchengID, index) {
+            $.post('/Xiangmuguanli/Fapiao_Liucheng_tooltip', { liuchengID: liuchengID }, function (result) {
+                if (result.success) {
+                    var ygh = "#yg" + index;
+                    $(ygh).tooltip({ content: result.Msg });
+                }
+            }, 'json');
+        };  
+    </script>
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin-bottom: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+
+
+
+
+

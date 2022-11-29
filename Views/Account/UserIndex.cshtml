@@ -1,0 +1,446 @@
+﻿@using Microsoft.AspNet.Identity
+@{
+    ViewBag.Title = "UserIndex";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string userid = User.Identity.GetUserId();//取到登录人员的id    
+}
+
+<div id="p" class="easyui-panel" data-options="fit:true, border:false " style="padding:5px;">
+    <table id="user_dg" class="easyui-datagrid" title="位置：基本设置>>角色管理" style="height:auto;">
+        <thead>
+            <tr>
+                <th data-options="field:'id',align:'center',width:'10%'" hidden></th>
+
+                <th data-options="field:'username',align:'center',width:'23%'">用户名</th>
+
+                <th data-options="field:'zhenshiname',align:'center',width:'25%'">真实姓名</th>
+
+                <th data-options="field:'role',align:'center',width:'23%'">角色</th>
+
+                <th data-options="field:'suoshubumen',align:'center',width:'30%'">所属部门</th>
+
+            </tr>
+        </thead>
+    </table>
+
+    <div id="user_toolbar">
+        <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true" onclick="newUser()">新 增</a>
+        <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="editUser()">编 辑</a>
+        <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-edit',plain:true" onclick="editpassword()">重置密码</a>
+        <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true" onclick="destroyUser()">删 除</a>
+    </div>
+
+    <div id="user_dlg" class="easyui-dialog" style="width:540px;height:380px;padding:10px 20px" data-options="closed:'true',buttons:'#user_btn'">
+        @*<div class="ftitle">用户设置</div>*@
+        <form id="user_fm" method="post" style="padding-left:10px" novalidate>
+            <div class="fitem">
+                <label>用户名:</label>
+                <input name="username" id="username" class="easyui-textbox" data-options="icons:[],validType:'checkuser'" style="width:320px;height:30px" required>  @*,validType:'checkuser'*@
+            </div>
+            <div class="fitem">
+                <label>真实姓名:</label>
+                <input name="zhenshiname" id="zhenshiname" class="easyui-textbox" data-options="icons:[],validType:'checkname'" style="width:320px;height:30px" required>
+            </div>
+            <div class="fitem">
+                <label>所属角色:</label>
+                <select id="role" name="role" class="easyui-combobox" style="width:320px;height:30px" data-options="editable:false" required>
+                    @foreach (var item in ViewBag.role)
+                    {
+                        <option value="@item">@item</option>
+                    }
+                </select>
+            </div>
+            <div class="fitem">
+                <label>所属部门:</label>
+                <select id="suoshubumen" name="suoshubumen" class="easyui-combobox" style="width:320px;height:30px" data-options="editable:false" required>
+                    @foreach (var item in ViewBag.bumen)
+                    {
+                        <option value="@item">@item</option>
+                    }
+                </select>
+            </div>
+            <div class="fitem" id="pw">
+                <label>密码:</label>
+                <input id="userpassword" name="password" type="password" class="easyui-textbox" data-options="icons:[],validType:'minLength[6]'" style="padding-left: 5px; width: 320px; height: 30px">
+            </div>
+            <div class="fitem" id="imf">
+                <label></label>
+                （若输入为空则密码默认为：123456）
+            </div>
+            <div class="fitem" id="pw_cf">
+                <label>确认密码:</label>
+                <input name="confirmPassword" id="confirmPassword" type="password" class="easyui-textbox" style="padding-left: 5px; width: 320px; height: 30px" data-options="icons:[],validType:'equalTo[\'#userpassword\']'">
+            </div>
+        </form>
+    </div>
+
+    <div id="user_btn" style="text-align:center;padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" onclick="saveUser()" style="width:90px">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#user_dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+
+    <div id="rst_pw_dlg" class="easyui-dialog" style="width:300px;height:200px;padding:10px 20px" data-options="closed:'true',buttons:'#rst_pw_btn'">
+        @*<div class="ftitle">用户设置</div>*@
+        <center>
+            <form id="pw_fm" method="post" novalidate>
+                <strong>您确定要重置密码为“123456”吗？</strong>
+            </form>
+        </center>
+    </div>
+    <div id="rst_pw_btn" style="text-align:center;padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton c6" data-options="iconcls:'icon-ok'" onclick="restpwd()" style="width:90px">确定</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconcls:'icon-cancel'" onclick="javascript: $('#rst_pw_dlg').dialog('close')" style="width:90px">取消</a>
+    </div>
+</div>
+
+@section footer{
+    <script type="text/javascript">
+        var url, userid = '@userid';        
+        $(function () {            
+            $("#user_dg").datagrid({
+                singleSelect: true,
+                async: false,
+                collapsible: true,
+                method: 'post',
+                url: '/Account/GetUser',
+                toolbar: '#user_toolbar',
+                rownumbers: true,
+                pagination: true,
+                fitcolumns: true,
+                nowrap: true,
+                fit: true,
+                autoRowHeight: false,
+                queryParams: {
+                    userid: userid
+                }
+            });
+
+            //设置分页控件
+            var p = $('#user_dg').datagrid('getPager');
+
+            $(p).pagination({
+                pageSize: 10,//每页显示的记录条数，默认为10
+                pageList: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],//可以设置每页记录条数的列表
+                beforePageText: '第',//页数文本框前显示的汉字
+                afterPageText: '页    共 {pages} 页',
+                displayMsg: '当前显示 {from} - {to} 条记录   共 {total} 条记录',
+            });
+
+            $('#username').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#zhenshiname').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#userpassword').textbox().textbox('addClearBtn', 'icon-clear');
+            $('#confirmPassword').textbox().textbox('addClearBtn', 'icon-clear');                     
+        });
+
+        //文本框有输入之后文本框末尾有删除符号出现
+        $.extend($.fn.textbox.methods, {
+            addClearBtn: function (jq, iconCls) {
+                return jq.each(function () {
+                    var t = $(this);
+                    var opts = t.textbox('options');
+                    opts.icons = opts.icons || [];
+                    opts.icons.unshift({
+                        iconCls: iconCls,
+                        handler: function (e) {
+                            $(e.data.target).textbox('clear').textbox('textbox').focus();
+                            $(this).css('visibility', 'hidden');
+                        }
+                    });
+                    t.textbox();
+                    if (!t.textbox('getText')) {
+                        t.textbox('getIcon', 0).css('visibility', 'hidden');
+                    }
+                    t.textbox('textbox').bind('keyup', function () {
+                        var icon = t.textbox('getIcon', 0);
+                        if ($(this).val()) {
+                            icon.css('visibility', 'visible');
+                        } else {
+                            icon.css('visibility', 'hidden');
+                        }
+                    });
+                });
+            }
+        });
+
+        $.extend($.fn.validatebox.defaults.rules, {
+            //检查名字是否雷同  checknameissame
+            checkuser: {
+                validator: function (value, param) {
+                    var name = value.trim();
+
+                    var result = "";
+                    $.ajax({
+                        type: 'post',
+                        async: false,
+                        url: '/Account/CheckUser',
+                        data: {
+                            "name": name
+                        },
+                        success: function (data) {
+                            result = data;
+                        }
+                    });
+                    return result.indexOf("True") == 0;
+                },
+                message: '该名字已经被占用'
+            },
+
+            //检查名字是否雷同  checknameissame
+            checkname: {
+                validator: function (value, param) {
+                    var name = value.trim();
+
+                    var result = "";
+                    $.ajax({
+                        type: 'post',
+                        async: false,
+                        url: '/Account/CheckName',
+                        data: {
+                            "name": name
+                        },
+                        success: function (data) {
+                            result = data;
+                        }
+                    });
+                    return result.indexOf("True") == 0;
+                },
+                message: '该名字已经被占用'
+            },
+
+            /*必须和某个字段相等*/
+            equalTo: {
+                validator: function (value, param) {
+                    return $(param[0]).val() == value;
+                },
+                message: '两次输入的密码不一致喔！'
+            },
+
+            //验证密码输入至少为6位字符
+            minLength: {
+                validator: function (value, param) {
+                    return value.length >= param[0];
+                },
+                message: '密码至少为6位字符或数字的组合！'
+            }
+        });
+
+        //在easyUI中操作textbox进行disable和enable状态切换时有两种方法：
+
+        //方法一、使用disabled属性进行操作，$("#xxx").textbox({ disabled: true }) / $("#xxx").textbox({ disabled: false })
+
+        //方法二、使用disable和enable方法进行操作，$("#xxx").textbox('disable') / $("#xxx").textbox('enable')
+
+        //以上两种方法均能实现disable和enable状态切换，但是方法一会完全重绘控件，而方法二只是属性修改
+       
+
+        function newUser() {
+            $('#user_dlg').dialog('open').dialog('setTitle', '新增用户');
+            $('#username').textbox('enable', 'true');
+            
+            $('#pw').show();
+            $('#pw_cf').show();
+            $('#imf').show();
+
+            //$('#role').combobox({
+            //    onSelect: function () {
+            //        var juese = $('#role').combobox('getValue');
+            //        alert(juese);
+            //        switch (juese) {
+            //            case "员工":
+            //                {
+            //                    $('#suoshubumen').combobox({ readonly: false });
+            //                    $('#suoshubumen').combobox({ multiple: false });
+            //                    $('#suoshubumen').combobox("clear");
+            //                    alert("1");
+            //                    break;
+            //                };
+            //            case "部门":
+            //                {
+            //                    $('#suoshubumen').combobox({ readonly: false });
+            //                    $('#suoshubumen').combobox({ multiple: false });
+            //                    $('#suoshubumen').combobox("clear");
+            //                    alert("2");
+            //                    break;
+            //                };
+            //            default:
+            //                {
+            //                    $('#suoshubumen').combobox({ readonly: false });
+            //                    $('#suoshubumen').combobox({ multiple: true });
+            //                    $('#suoshubumen').combobox("clear");
+            //                    alert("3");
+            //                };
+            //        }                    
+            //    }
+            //});
+            
+            $('#suoshubumen').combobox({ multiple: true });
+            $('#user_fm').form('clear');
+
+            //var juese = $('#role').combobox('getValue');
+            //alert(juese);
+            //if (juese == "员工" || juese == "部门主管") {
+            //    $('#suoshubumen').combobox({ multiple: false });
+            //}          
+
+            url = '/Account/AddUser?userId=' + userid;
+        };
+
+        //用户编辑
+        function editUser() {
+            var row = $('#user_dg').datagrid('getSelected');
+
+            if (row) {
+                var username = row.username;
+                if (username == "admin") {
+                    alert("对该用户请谨慎编辑!")                    
+                };
+                var id = row.id;                
+                $('#pw').hide();
+                $('#pw_cf').hide();
+                $('#imf').hide();                
+                $('#user_dlg').dialog('open').dialog('setTitle', '编辑用户');
+                $('#user_fm').form('load', row);
+                var juese = $('#role').combobox('getValue');
+                
+                if (juese != "部门主管") {                    
+                    $('#suoshubumen').combobox({ multiple: true });       //当所编辑角色不为主管，所属部门就可以为多选
+                } else {
+                    $('#suoshubumen').combobox({ multiple: false });      // combobox 默认为多选，这里要设置为false
+                }
+
+                $('#username').textbox('disable', true);                //这里放开  用户名可编辑  ，用户的同名验证改为在后台进行，不在前端进行，  
+                url = '/Account/Edit_user?id=' + id + '';                 //因为前端验证在编辑时会有  验证同名不通过问题
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要编辑的行！", "warning");
+            }
+        };
+
+        function editpassword() {
+            var row = $('#user_dg').datagrid('getSelected');
+            if (row) {
+                var name = row.username;
+
+                $('#rst_pw_dlg').dialog('open').dialog('setTitle', '重置密码');
+
+                url = '/Account/Resetpassword_csh?name=' + name;
+            }
+            else {
+                // alert("b");
+                $.messager.alert("错误提示", "请选择要重置密码的用户！", "warning");
+            }
+        };
+
+        function restpwd() {
+            $('#pw_fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    $('#rst_pw_dlg').dialog('close');		// close the dialog
+                    result = JSON.parse(result);
+                    if (result.success == true) {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.errorMsg
+                        });
+                    } else {
+                        $.messager.show({
+                            title: '错误提示',
+                            msg: result.errorMsg
+                        });
+                    }
+                }
+            });
+        };
+
+        function saveUser() {
+
+            $('#user_fm').form('submit', {
+                url: url,
+                onSubmit: function () {
+                    return $(this).form('validate');
+                },
+                success: function (result) {
+                    //var result = eval('(' + result + ')');
+                    result = JSON.parse(result);
+
+                    $('#user_dlg').dialog('close');		// close the dialog
+                    $('#user_dg').datagrid('reload');	// reload the user data
+                    if (result.success == true) {
+                        $.messager.show({
+                            title: '提示',
+                            msg: result.Msg
+                        });
+                    } else {
+                        $.messager.show({
+                            title: '错误提示',
+                            msg: result.Msg
+                        });
+                    }
+                }
+            });
+        };
+
+        function destroyUser() {
+            var row = $('#user_dg').datagrid('getSelected');
+            if (row) {
+                $.messager.confirm('提示', '您确定要删除该员工吗？', function (r) {
+                    if (r) {
+                        $.post('/Account/Deluser', { yuangongid: row.id }, function (result) {
+
+                            if (result.Succeeded) {
+                                $('#user_dg').datagrid('reload');	// reload the user data
+                                $.messager.show({
+                                    title: '提示',
+                                    msg: result.Msg
+                                });
+                            } else {
+                                $.messager.show({
+                                    title: '错误提示',
+                                    msg: result.Msg
+                                });
+                            }
+                        }, 'json');
+                    }
+                });
+            }
+            else {
+                $.messager.alert("错误提示", "请选择要删除的行！", "warning");
+            }
+        };
+        
+    </script>
+
+    <style type="text/css">
+        #fm {
+            margin: 0;
+            padding: 10px 30px;
+        }
+
+        .ftitle {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 5px 0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .fitem {
+            margin: 10px;
+        }
+
+            .fitem label {
+                display: inline-block;
+                width: 80px;
+            }
+
+            .fitem input {
+                width: 160px;
+            }
+    </style>
+}
+
+
+
